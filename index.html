@@ -1,1724 +1,1243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-site-verification" content="3sEKCoLT8UQ2tGs_njHnhB4eF5AIXaofs1fdXFXuMW0" />
+     <meta name="google-site-verification" content="3sEKCoLT8UQ2tGs_njHnhB4eF5AIXaofs1fdXFXuMW0" />
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Vision School - Academic & Finance Portal</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Vision School - Multi-Page Management System</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brandYellow: '#facc15',
-                        brandGold: '#eab308',
-                        brandNavy: '#0f172a',
-                        brandRed: '#dc2626',
-                        brandBg: '#f8fafc'
-                    }
-                }
-            }
-        }
-    </script>
     <!-- FontAwesome Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- SheetJS CDN for reading Excel / XLSX files -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PapaParse CDN for CSV Bulk Import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        #toastContainer {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 400px;
+        }
+        .toast {
+            pointer-events: auto;
+            animation: slideDown 0.3s ease-out forwards;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .nav-btn.active-nav-student {
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-weight: 700;
+            border-left: 4px solid #2563eb;
+        }
+        .nav-btn.active-nav-admin {
+            background-color: #1e293b;
+            color: #f59e0b;
+            font-weight: 700;
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col selection:bg-amber-400 selection:text-slate-900 overflow-x-hidden">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col justify-between antialiased w-full overflow-x-hidden">
 
-    <!-- Top Navigation Bar -->
-    <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-amber-400/30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-3 h-16 sm:h-20">
+    <!-- TOP-CENTER TOAST NOTIFICATIONS CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <!-- MAIN HEADER -->
+    <header class="gradient-bg text-white shadow-md sticky top-0 z-40 w-full">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex justify-between items-center gap-2">
+            
+            <div class="flex items-center gap-2.5">
+                <!-- STUDENT HAMBURGER BUTTON -->
+                <button id="studentMenuBtn" onclick="toggleStudentMenu()" class="hidden text-white hover:text-amber-300 text-lg p-1.5 focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 
-                <!-- School Logo & Branding -->
-                <div class="flex items-center gap-3">
-                    <div class="w-5 h-5 sm:w-8 sm:h-8 bg-amber-400 text-slate-900 rounded-2xl flex flex-col items-center justify-center font-extrabold shadow-md border-2 border-amber-300 shrink-0 p-1">
-                        <i class="fa-solid fa-shield-halved text-slate-900 text-base sm:text-lg"></i>
-                        <span class="text-[7px] sm:text-[8px] tracking-tighter uppercase font-black -mt-1 text-red-600">Excel</span>
-                    </div>
-                    <div>
-                        <h4 class="text-base sm:text-lg font-black tracking-wide text-amber-400 uppercase">
-                            THE VISION SCHOOL
-                        </h4>
-                        <p class="text-[9px] sm:text-[10px] text-slate-300 font-semibold tracking-wider uppercase">
-                        </p>
-                    </div>
+                <!-- ADMIN HAMBURGER BUTTON -->
+                <button id="adminMenuBtn" onclick="toggleAdminMenu()" class="hidden text-white hover:text-amber-300 text-lg p-1.5 focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid text-lg sm:text-xl fa-graduation-cap text-amber-300"></i>
+                    <h1 class="text-sm sm:text-lg font-bold tracking-wide truncate max-w-[160px] sm:max-w-none">The Vision School</h1>
                 </div>
-
-                <!-- Desktop Navigation Tabs -->
-                <nav class="hidden lg:flex items-center gap-1.5 bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700">
-                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 shadow-sm transition-all shrink-0">
-                        <i class="fa-solid fa-chart-line mr-1"></i> Dashboard
-                    </button>
-                    <button onclick="switchTab('pre-primary')" id="tab-pre-primary" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition shrink-0">
-                        Pre-Primary
-                    </button>
-                    <button onclick="switchTab('primary')" id="tab-primary" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition shrink-0">
-                        Primary
-                    </button>
-                    <button onclick="switchTab('secondary')" id="tab-secondary" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition shrink-0">
-                        Secondary
-                    </button>
-                    <button onclick="switchTab('teachers')" id="tab-teachers" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition shrink-0">
-                        <i class="fa-solid fa-chalkboard-user mr-1 text-amber-400"></i> Faculty
-                    </button>
-                    <button onclick="switchTab('finance')" id="tab-finance" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition shrink-0">
-                        <i class="fa-solid fa-coins mr-1 text-emerald-400"></i> Finance Panel
-                    </button>
-                    <button onclick="switchTab('admin')" id="tab-admin" class="nav-btn px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition shrink-0">
-                        <i class="fa-solid fa-user-shield mr-1 text-red-400"></i> Admin
-                    </button>
-                </nav>
-
-                <!-- Actions & Mobile Hamburger Menu Button -->
-                <div class="flex items-center gap-2">
-                    <button onclick="exportData()" class="hidden sm:flex px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 rounded-xl text-xs font-bold transition items-center gap-2 shadow-sm">
-                        <i class="fa-solid fa-download"></i> Export Data
-                    </button>
-
-                    <!-- Main Navigation Hamburger Button -->
-                    <button onclick="toggleMobileMenu()" class="lg:hidden p-2.5 bg-slate-800 text-amber-400 hover:bg-slate-700 border border-slate-700 rounded-xl text-base focus:outline-none transition">
-                        <i id="hamburger-icon" class="fa-solid fa-bars"></i>
-                    </button>
-                </div>
-
             </div>
-        </div>
 
-        <!-- Main Mobile Menu Drawer -->
-        <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur-md px-4 py-3 space-y-2">
-            <button onclick="switchTab('dashboard'); toggleMobileMenu()" id="mob-tab-dashboard" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 flex items-center justify-between">
-                <span><i class="fa-solid fa-chart-line mr-2"></i> Dashboard</span>
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-            <button onclick="switchTab('pre-primary'); toggleMobileMenu()" id="mob-tab-pre-primary" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center justify-between">
-                <span><i class="fa-solid fa-child mr-2 text-amber-400"></i> Pre-Primary Wing</span>
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-            <button onclick="switchTab('primary'); toggleMobileMenu()" id="mob-tab-primary" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center justify-between">
-                <span><i class="fa-solid fa-school mr-2 text-amber-400"></i> Primary Wing</span>
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-            <button onclick="switchTab('secondary'); toggleMobileMenu()" id="mob-tab-secondary" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center justify-between">
-                <span><i class="fa-solid fa-graduation-cap mr-2 text-amber-400"></i> Secondary Wing</span>
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-            <button onclick="switchTab('teachers'); toggleMobileMenu()" id="mob-tab-teachers" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center justify-between">
-                <span><i class="fa-solid fa-chalkboard-user mr-2 text-amber-400"></i> Faculty Directory</span>
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-            <button onclick="switchTab('finance'); toggleMobileMenu()" id="mob-tab-finance" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center justify-between">
-                <span><i class="fa-solid fa-coins mr-2 text-emerald-400"></i> Finance Panel</span>
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-            <button onclick="switchTab('admin'); toggleMobileMenu()" id="mob-tab-admin" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center justify-between">
-                <span><i class="fa-solid fa-user-shield mr-2 text-red-400"></i> Admin Panel</span>
-                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            </button>
-
-            <div class="pt-2 border-t border-slate-800 sm:hidden">
-                <button onclick="exportData(); toggleMobileMenu()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-download"></i> Export Data
+            <div id="headerAdminBtnContainer" class="flex-shrink-0">
+                <button onclick="showAdminAuthScreen()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-2.5 py-1.5 rounded-lg text-xs shadow transition flex items-center gap-1">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span class="hidden sm:inline">Admin Panel</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full">
-
-        <!-- DASHBOARD OVERVIEW -->
-        <section id="page-dashboard" class="page-view space-y-6 sm:space-y-8">
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-                <div class="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <div>
-                        <p class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Enrolled</p>
-                        <h3 id="stat-total" class="text-xl sm:text-3xl font-extrabold text-slate-900 mt-1">0</h3>
-                    </div>
-                    <div class="w-9 h-9 sm:w-12 sm:h-12 bg-amber-50 text-slate-900 rounded-xl sm:rounded-2xl border border-amber-200 flex items-center justify-center text-base sm:text-xl font-bold self-end sm:self-auto">
-                        <i class="fa-solid fa-users text-amber-600"></i>
-                    </div>
+    <!-- STUDENT SIDEBAR DRAWER -->
+    <div id="studentNavDrawer" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex">
+        <div class="w-64 sm:w-72 bg-white h-full shadow-2xl flex flex-col justify-between p-4">
+            <div>
+                <div class="flex justify-between items-center border-b pb-3 mb-3">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-compass text-blue-600"></i> Navigation
+                    </h3>
+                    <button onclick="toggleStudentMenu()" class="text-slate-400 hover:text-slate-700 text-base p-1"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <nav class="space-y-1">
+                    <button id="stBtn-homePage" onclick="switchStudentPage('homePage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-house w-4 text-center"></i> Home
+                    </button>
+                    <button id="stBtn-timetablePage" onclick="switchStudentPage('timetablePage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-calendar-days w-4 text-center"></i> Timetable
+                    </button>
+                    <button id="stBtn-resultPage" onclick="switchStudentPage('resultPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-award w-4 text-center"></i> Results
+                    </button>
+                    <button id="stBtn-homeworkPage" onclick="switchStudentPage('homeworkPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-pen-ruler w-4 text-center"></i> Homework
+                    </button>
+                </nav>
+            </div>
+            <div class="border-t pt-3 space-y-2">
+                <button onclick="window.print()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Print Details
+                </button>
+                <button onclick="logoutStudent()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 py-1.5 rounded-lg text-xs font-bold transition border border-red-200 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </div>
+        <div class="flex-grow" onclick="toggleStudentMenu()"></div>
+    </div>
 
-                <div class="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <div>
-                        <p class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Att. Avg</p>
-                        <h3 id="stat-attendance-avg" class="text-xl sm:text-3xl font-extrabold text-indigo-600 mt-1">0%</h3>
-                    </div>
-                    <div class="w-9 h-9 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl sm:rounded-2xl border border-indigo-200 flex items-center justify-center text-base sm:text-xl font-bold self-end sm:self-auto">
-                        <i class="fa-solid fa-chart-pie"></i>
-                    </div>
+    <!-- ADMIN SIDEBAR DRAWER -->
+    <div id="adminNavDrawer" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex">
+        <div class="w-64 sm:w-72 bg-slate-900 text-white h-full shadow-2xl flex flex-col justify-between p-4">
+            <div>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-3">
+                    <h3 class="font-bold text-amber-400 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-sliders"></i> Admin Menu
+                    </h3>
+                    <button onclick="toggleAdminMenu()" class="text-slate-400 hover:text-white text-base p-1"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <nav class="space-y-1">
+                    <button id="admBtn-adminOverviewPage" onclick="switchAdminPage('adminOverviewPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-chart-pie w-4 text-center"></i> Overview & Import
+                    </button>
+                    <button id="admBtn-adminClassPage" onclick="switchAdminPage('adminClassPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-layer-group w-4 text-center"></i> Class Updates
+                    </button>
+                    <button id="admBtn-adminProfilePage" onclick="switchAdminPage('adminProfilePage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-user-plus w-4 text-center"></i> Student Profiles
+                    </button>
+                    <button id="admBtn-adminDirectoryPage" onclick="switchAdminPage('adminDirectoryPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-users w-4 text-center"></i> Students List
+                    </button>
+                </nav>
+            </div>
+            <div class="border-t border-slate-800 pt-3 space-y-2">
+                <button onclick="exportStudentsToCSV()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-file-export"></i> Export CSV
+                </button>
+                <button onclick="logoutAdmin()" class="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-power-off"></i> Exit Admin
+                </button>
+            </div>
+        </div>
+        <div class="flex-grow" onclick="toggleAdminMenu()"></div>
+    </div>
 
-                <div class="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <div>
-                        <p class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Faculty</p>
-                        <h3 id="stat-teachers" class="text-xl sm:text-3xl font-extrabold text-slate-900 mt-1">0</h3>
-                    </div>
-                    <div class="w-9 h-9 sm:w-12 sm:h-12 bg-slate-100 text-slate-800 rounded-xl sm:rounded-2xl border border-slate-200 flex items-center justify-center text-base sm:text-xl self-end sm:self-auto">
-                        <i class="fa-solid fa-chalkboard-user"></i>
-                    </div>
-                </div>
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto p-2.5 sm:p-5 w-full flex-grow">
 
-                <div class="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <div>
-                        <p class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Fees Paid</p>
-                        <h3 id="stat-fees-paid" class="text-xl sm:text-3xl font-extrabold text-amber-600 mt-1">0</h3>
-                    </div>
-                    <div class="w-9 h-9 sm:w-12 sm:h-12 bg-amber-50 text-amber-600 rounded-xl sm:rounded-2xl border border-amber-100 flex items-center justify-center text-base sm:text-xl self-end sm:self-auto">
-                        <i class="fa-solid fa-file-invoice-dollar"></i>
-                    </div>
+        <!-- 1. STUDENT LOGIN SCREEN -->
+        <section id="loginSection" class="hidden max-w-sm mx-auto my-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 text-lg border border-blue-100">
+                    <i class="fa-solid fa-user-lock"></i>
                 </div>
-
-                <div class="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 col-span-2 sm:col-span-1">
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="relative flex h-2 w-2">
-                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <p class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Present Teachers</p>
-                        </div>
-                        <h3 id="stat-teachers-present" class="text-xl sm:text-3xl font-extrabold text-emerald-600 mt-1">0</h3>
-                    </div>
-                    <div class="w-9 h-9 sm:w-12 sm:h-12 bg-emerald-50 text-emerald-600 rounded-xl sm:rounded-2xl border border-emerald-200 flex items-center justify-center text-base sm:text-xl self-end sm:self-auto">
-                        <i class="fa-solid fa-user-check"></i>
-                    </div>
-                </div>
+                <h2 class="text-lg font-bold text-slate-800">Student Portal Login</h2>
+                <p class="text-slate-500 text-[11px] mt-0.5">Enter credentials to continue</p>
             </div>
 
-            <!-- Wing Navigator Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div onclick="switchTab('pre-primary')" class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer group">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-400 text-slate-950 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-base sm:text-lg font-black shadow-sm group-hover:scale-105 transition-transform">
-                        PG
-                    </div>
-                    <h3 class="text-lg sm:text-xl font-bold text-slate-900">Pre-Primary Wing</h3>
-                    <p class="text-xs text-slate-500 mt-1">Playgroup, Nursery, Prep (KG)</p>
-                    <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-100 flex justify-between text-xs font-bold">
-                        <span class="text-rose-600">Rose Section</span>
-                        <span class="text-emerald-600">Tulip Section</span>
-                    </div>
+            <form onsubmit="handleStudentLogin(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Username</label>
+                    <input type="text" id="loginUsername" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs" placeholder="e.g. jasim">
                 </div>
-
-                <div onclick="switchTab('primary')" class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer group">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 text-amber-400 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-base sm:text-lg font-black border border-slate-800 group-hover:scale-105 transition-transform">
-                        PR
-                    </div>
-                    <h3 class="text-lg sm:text-xl font-bold text-slate-900">Primary Wing</h3>
-                    <p class="text-xs text-slate-500 mt-1">Classes 1 to 5</p>
-                    <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-100 flex justify-between text-xs font-bold">
-                        <span class="text-rose-600">Rose Section</span>
-                        <span class="text-emerald-600">Tulip Section</span>
-                    </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs" placeholder="Password">
                 </div>
-
-                <div onclick="switchTab('secondary')" class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer group">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-700 text-white rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-base sm:text-lg font-black shadow-sm group-hover:scale-105 transition-transform">
-                        SC
-                    </div>
-                    <h3 class="text-lg sm:text-xl font-bold text-slate-900">Secondary Wing</h3>
-                    <p class="text-xs text-slate-500 mt-1">Classes 6 to 10</p>
-                    <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-100 flex justify-between text-xs font-bold">
-                        <span class="text-rose-600">Rose Section</span>
-                        <span class="text-emerald-600">Tulip Section</span>
-                    </div>
-                </div>
-
-                <div onclick="switchTab('teachers')" class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 hover:border-slate-900 hover:shadow-md transition-all cursor-pointer group">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 text-slate-900 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-base sm:text-lg font-bold border border-slate-300 group-hover:scale-105 transition-transform">
-                        <i class="fa-solid fa-chalkboard-user"></i>
-                    </div>
-                    <h3 class="text-lg sm:text-xl font-bold text-slate-900">Faculty & Staff</h3>
-                    <p class="text-xs text-slate-500 mt-1">All Wings Staff Directory</p>
-                    <div class="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-100 flex justify-between text-xs font-bold">
-                        <span class="text-amber-600">Faculty Records</span>
-                        <span class="text-slate-900">View All <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                    </div>
-                </div>
-            </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-sm transition text-xs mt-2">
+                    Login
+                </button>
+            </form>
         </section>
 
-        <!-- PRE-PRIMARY SECTION -->
-        <section id="page-pre-primary" class="page-view space-y-6 hidden">
-            <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm">
-                <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold text-slate-900">Pre-Primary Wing Register</h2>
-                        <p class="text-xs text-slate-500">Playgroup, Nursery & Prep Class Records</p>
+        <!-- 2. STUDENT MULTI-PAGE SECTION -->
+        <section id="dashboardSection" class="hidden space-y-4">
+            
+            <!-- Student Header Profile Info -->
+            <div class="bg-white p-3.5 sm:p-4 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800" id="dashStudentName">Welcome!</h2>
+                <p class="text-[11px] text-slate-500 mt-0.5">Roll: <span id="dashRollNo" class="font-semibold text-slate-700">-</span> | Sec: <span id="dashSectionName" class="font-semibold text-blue-600">-</span> | Class: <span id="dashClass" class="font-semibold text-slate-700">-</span></p>
+            </div>
+
+            <!-- A. STUDENT HOME PAGE -->
+            <div id="homePage" class="student-page space-y-4">
+                <!-- STATS OVERVIEW -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Attendance</p>
+                            <p class="text-xl font-extrabold text-emerald-600 mt-0.5" id="dashAttendance">0%</p>
+                        </div>
+                        <div class="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
-                        <input id="search-pre-primary" oninput="renderAttendance('pre-primary')" type="text" placeholder="Search student..." class="bg-slate-50 border border-slate-200 text-xs rounded-xl px-3.5 py-2 text-slate-800 focus:outline-none focus:border-amber-400 w-full sm:w-auto">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Status</p>
+                            <p class="text-xs font-bold text-blue-600 mt-1">Active</p>
+                        </div>
+                        <div class="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUICK MODULES -->
+                <div>
+                    <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Quick Access</h3>
+                    <div class="grid grid-cols-3 gap-2">
                         
-                        <select id="select-pre-primary-class" onchange="renderAttendance('pre-primary')" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-4 py-2 text-slate-800 focus:outline-none">
-                            <option value="Playgroup">Class: Playgroup</option>
-                            <option value="Nursery" selected>Class: Nursery</option>
-                            <option value="Prep">Class: Prep / KG</option>
-                        </select>
-
-                        <div class="bg-slate-100 p-1 rounded-xl flex border border-slate-200 self-start sm:self-auto w-full sm:w-auto justify-center">
-                            <button onclick="setSubSection('pre-primary', 'Rose')" id="btn-pre-primary-rose" class="sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-amber-400 shadow-sm">Rose</button>
-                            <button onclick="setSubSection('pre-primary', 'Tulip')" id="btn-pre-primary-tulip" class="sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600">Tulip</button>
+                        <div onclick="switchStudentPage('timetablePage')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-slate-50 cursor-pointer flex flex-col items-center justify-center text-center">
+                            <div class="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm mb-1">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                            <span class="font-bold text-slate-700 text-[11px]">Timetable</span>
                         </div>
-                    </div>
-                </div>
 
-                <div id="grid-pre-primary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </div>
-        </section>
-
-        <!-- PRIMARY SECTION -->
-        <section id="page-primary" class="page-view space-y-6 hidden">
-            <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm">
-                <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold text-slate-900">Primary Wing Register</h2>
-                        <p class="text-xs text-slate-500">Classes 1 through 5 Attendance Records</p>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
-                        <input id="search-primary" oninput="renderAttendance('primary')" type="text" placeholder="Search student..." class="bg-slate-50 border border-slate-200 text-xs rounded-xl px-3.5 py-2 text-slate-800 focus:outline-none focus:border-amber-400 w-full sm:w-auto">
-
-                        <select id="select-primary-class" onchange="renderAttendance('primary')" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-4 py-2 text-slate-800 focus:outline-none">
-                            <option value="Class 1">Class 1</option>
-                            <option value="Class 2">Class 2</option>
-                            <option value="Class 3" selected>Class 3</option>
-                            <option value="Class 4">Class 4</option>
-                            <option value="Class 5">Class 5</option>
-                        </select>
-
-                        <div class="bg-slate-100 p-1 rounded-xl flex border border-slate-200 self-start sm:self-auto w-full sm:w-auto justify-center">
-                            <button onclick="setSubSection('primary', 'Rose')" id="btn-primary-rose" class="sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-amber-400 shadow-sm">Rose</button>
-                            <button onclick="setSubSection('primary', 'Tulip')" id="btn-primary-tulip" class="sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600">Tulip</button>
+                        <div onclick="switchStudentPage('resultPage')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-slate-50 cursor-pointer flex flex-col items-center justify-center text-center">
+                            <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm mb-1">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+                            <span class="font-bold text-slate-700 text-[11px]">Results</span>
                         </div>
-                    </div>
-                </div>
 
-                <div id="grid-primary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </div>
-        </section>
-
-        <!-- SECONDARY SECTION -->
-        <section id="page-secondary" class="page-view space-y-6 hidden">
-            <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm">
-                <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold text-slate-900">Secondary Wing Register</h2>
-                        <p class="text-xs text-slate-500">Classes 6 to 10 Student Records</p>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
-                        <input id="search-secondary" oninput="renderAttendance('secondary')" type="text" placeholder="Search student..." class="bg-slate-50 border border-slate-200 text-xs rounded-xl px-3.5 py-2 text-slate-800 focus:outline-none focus:border-amber-400 w-full sm:w-auto">
-
-                        <select id="select-secondary-class" onchange="renderAttendance('secondary')" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-4 py-2 text-slate-800 focus:outline-none">
-                            <option value="Class 6">Class 6</option>
-                            <option value="Class 7">Class 7</option>
-                            <option value="Class 8">Class 8</option>
-                            <option value="Class 9" selected>Class 9</option>
-                            <option value="Class 10">Class 10</option>
-                        </select>
-
-                        <div class="bg-slate-100 p-1 rounded-xl flex border border-slate-200 self-start sm:self-auto w-full sm:w-auto justify-center">
-                            <button onclick="setSubSection('secondary', 'Rose')" id="btn-secondary-rose" class="sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-amber-400 shadow-sm">Rose</button>
-                            <button onclick="setSubSection('secondary', 'Tulip')" id="btn-secondary-tulip" class="sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600">Tulip</button>
+                        <div onclick="switchStudentPage('homeworkPage')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-slate-50 cursor-pointer flex flex-col items-center justify-center text-center">
+                            <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-sm mb-1">
+                                <i class="fa-solid fa-pen-ruler"></i>
+                            </div>
+                            <span class="font-bold text-slate-700 text-[11px]">Homework</span>
                         </div>
+
                     </div>
                 </div>
 
-                <div id="grid-secondary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <!-- Announcement Board -->
+                <div class="bg-amber-50/90 border-l-4 border-amber-400 p-3 rounded-r-xl shadow-sm">
+                    <div class="flex items-center gap-1.5 text-amber-800 font-bold text-xs mb-1">
+                        <i class="fa-solid fa-bullhorn"></i> Notice Board
+                    </div>
+                    <p id="dashNotice" class="text-xs text-amber-900 leading-relaxed">No active notices.</p>
+                </div>
             </div>
+
+            <!-- B. TIMETABLE PAGE -->
+            <div id="timetablePage" class="student-page hidden space-y-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-calendar-days text-indigo-500"></i> Timetable & Syllabus
+                    </h3>
+                    <div id="examScheduleList" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- C. RESULT PAGE -->
+            <div id="resultPage" class="student-page hidden space-y-3">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-xl shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-blue-100 tracking-wider">Overall Average Result</p>
+                        <p class="text-2xl font-extrabold mt-0.5" id="dashAvgResult">0%</p>
+                    </div>
+                    <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chart-line text-amber-300"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-award text-amber-500"></i> Subject Marks
+                    </h3>
+                    <div id="examList" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- D. HOMEWORK PAGE -->
+            <div id="homeworkPage" class="student-page hidden space-y-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                    <div class="border-b pb-2">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-ruler text-amber-500"></i> Today's Homework
+                        </h3>
+                    </div>
+                    <div id="dashTodayHomework" class="text-xs leading-relaxed text-slate-700 space-y-2"></div>
+                </div>
+            </div>
+
         </section>
 
-        <!-- TEACHERS SECTION -->
-        <section id="page-teachers" class="page-view space-y-6 hidden">
-            <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm">
-                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold text-slate-900">Faculty & Teachers Directory</h2>
-                        <p class="text-xs text-slate-500">Live Status & Salary Updates</p>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <select id="filter-teacher-wing" onchange="renderTeachersPublic()" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-4 py-2 text-slate-800 focus:outline-none">
-                            <option value="all">All Wings</option>
-                            <option value="pre-primary">Pre-Primary</option>
-                            <option value="primary">Primary</option>
-                            <option value="secondary">Secondary</option>
-                        </select>
-
-                        <input id="search-teacher" oninput="renderTeachersPublic()" type="text" placeholder="Search teacher..." class="bg-slate-50 border border-slate-200 text-xs rounded-xl px-3.5 py-2 text-slate-800 focus:outline-none">
-                    </div>
-                </div>
-
-                <div id="grid-teachers-public" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <!-- 3. ADMIN AUTHENTICATION SCREEN -->
+        <section id="adminAuthSection" class="hidden max-w-sm mx-auto my-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-shield text-amber-500"></i> Admin Verification
+                </h3>
+                <button onclick="goBackFromAdminAuth()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-semibold transition flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
             </div>
+            <form onsubmit="event.preventDefault(); verifyAdminPassword();" class="space-y-3">
+                <p class="text-[11px] text-slate-500">Enter admin security password:</p>
+                <input type="password" id="adminPasswordInput" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs" placeholder="Password">
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded-lg transition shadow-sm text-xs">
+                    Access Control Panel
+                </button>
+            </form>
         </section>
 
-        <!-- FINANCE PANEL SECTION -->
-        <section id="page-finance" class="page-view space-y-6 sm:space-y-8 hidden">
-            <div class="p-4 sm:p-5 rounded-2xl bg-emerald-950 text-white border border-emerald-400/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-md">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-10 h-10 bg-emerald-400 text-slate-950 rounded-xl flex items-center justify-center font-bold shadow-sm shrink-0">
-                        <i class="fa-solid fa-calculator"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-sm sm:text-base font-bold text-emerald-400">Accountant Finance Portal</h4>
-                        <p class="text-[11px] sm:text-xs text-emerald-200">Manage Fees Collection & Payroll Details</p>
-                    </div>
+        <!-- 4. ADMIN MULTI-PAGE PANEL -->
+        <section id="adminPanelSection" class="hidden space-y-4">
+            
+            <!-- Admin Header -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-sm font-bold text-slate-800 truncate">Admin Portal</h2>
                 </div>
-
-                <button onclick="lockFinanceSession()" class="px-3.5 py-2 bg-emerald-900 border border-emerald-700 hover:bg-emerald-800 text-emerald-100 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                    <i class="fa-solid fa-lock text-rose-400"></i> Lock Finance Panel
+                <button onclick="logoutAdmin()" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-red-200 flex items-center gap-1">
+                    <i class="fa-solid fa-power-off"></i> Exit
                 </button>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <div class="bg-emerald-50 border border-emerald-200 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-emerald-700 uppercase">Total Collected</p>
-                        <h4 id="fin-stat-collected" class="text-sm sm:text-xl font-extrabold text-emerald-900">PKR 0</h4>
-                    </div>
-                    <i class="fa-solid fa-money-bill-wave text-emerald-600 text-lg sm:text-2xl"></i>
-                </div>
-                <div class="bg-rose-50 border border-rose-200 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-rose-700 uppercase">Pending Fees</p>
-                        <h4 id="fin-stat-pending" class="text-sm sm:text-xl font-extrabold text-rose-900">PKR 0</h4>
-                    </div>
-                    <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg sm:text-2xl"></i>
-                </div>
-                <div class="bg-amber-50 border border-amber-200 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-amber-700 uppercase">Paid Students</p>
-                        <h4 id="fin-stat-paid-students" class="text-sm sm:text-xl font-extrabold text-amber-900">0 / 0</h4>
-                    </div>
-                    <i class="fa-solid fa-user-check text-amber-600 text-lg sm:text-2xl"></i>
-                </div>
-                <div class="bg-slate-100 border border-slate-300 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-slate-600 uppercase">Salary Status</p>
-                        <h4 id="fin-stat-salary-status" class="text-sm sm:text-xl font-extrabold text-slate-800">0/0 Done</h4>
-                    </div>
-                    <i class="fa-solid fa-wallet text-slate-600 text-lg sm:text-2xl"></i>
-                </div>
-            </div>
-
-            <!-- STUDENT FEES ENTRY PANEL -->
-            <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm space-y-4">
-                <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 border-b border-slate-100 pb-4">
-                    <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Class & Section Student Fees Register</h3>
-                        <p class="text-xs text-slate-500">Update monthly tuition fee payment records</p>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2">
-                        <select id="fin-filter-wing" onchange="renderFinanceStudentTable()" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2 text-slate-800 focus:outline-none">
-                            <option value="all">All Wings</option>
-                            <option value="pre-primary">Pre-Primary</option>
-                            <option value="primary">Primary</option>
-                            <option value="secondary">Secondary</option>
-                        </select>
-                        
-                        <select id="fin-filter-section" onchange="renderFinanceStudentTable()" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2 text-slate-800 focus:outline-none">
-                            <option value="all">All Sections</option>
-                            <option value="Rose">Rose</option>
-                            <option value="Tulip">Tulip</option>
-                        </select>
-
-                        <select id="fin-filter-fee" onchange="renderFinanceStudentTable()" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2 text-slate-800 focus:outline-none">
-                            <option value="all">All Fee Status</option>
-                            <option value="Paid">Paid</option>
-                            <option value="Unpaid">Unpaid</option>
-                        </select>
-
-                        <input id="fin-search-student" oninput="renderFinanceStudentTable()" type="text" placeholder="Search student..." class="bg-slate-50 border border-slate-200 text-xs rounded-xl px-3.5 py-2 text-slate-800 focus:outline-none w-full sm:w-40">
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                    <table class="w-full text-left border-collapse text-xs min-w-[650px]">
-                        <thead>
-                            <tr class="bg-slate-900 text-amber-400 font-bold uppercase">
-                                <th class="p-3">Roll</th>
-                                <th class="p-3">Student Name</th>
-                                <th class="p-3">Class & Section</th>
-                                <th class="p-3">Monthly Fee</th>
-                                <th class="p-3">Fee Status</th>
-                                <th class="p-3 text-right">Quick Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fin-student-tbody" class="divide-y divide-slate-200 text-slate-700"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- TEACHER SALARY ENTRY PANEL -->
-            <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
-                    <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Faculty Payroll & Salary Tracker</h3>
-                        <p class="text-xs text-slate-500">Record teacher salary disbursement details</p>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <select id="fin-filter-salary" onchange="renderFinanceTeacherTable()" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2 text-slate-800 focus:outline-none">
-                            <option value="all">All Salary Status</option>
-                            <option value="Salary Done">Salary Done</option>
-                            <option value="Salary Pending">Salary Pending</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                    <table class="w-full text-left border-collapse text-xs min-w-[600px]">
-                        <thead>
-                            <tr class="bg-slate-900 text-amber-400 font-bold uppercase">
-                                <th class="p-3">Teacher Name</th>
-                                <th class="p-3">Wing & Subject</th>
-                                <th class="p-3">Monthly Salary</th>
-                                <th class="p-3">Salary Status</th>
-                                <th class="p-3 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fin-teacher-tbody" class="divide-y divide-slate-200 text-slate-700"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ADMIN PANEL SECTION -->
-        <section id="page-admin" class="page-view space-y-6 sm:space-y-8 hidden">
-            
-            <!-- Secure Admin Header with Hamburger Action Menu -->
-            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900 text-white border border-amber-400/30 flex flex-col shadow-md space-y-3">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-10 h-10 bg-amber-400 text-slate-950 rounded-xl flex items-center justify-center font-bold shadow-sm shrink-0">
-                            <i class="fa-solid fa-user-shield"></i>
-                        </div>
+            <!-- ADMIN PAGE 1: OVERVIEW & CSV IMPORT -->
+            <div id="adminOverviewPage" class="admin-page space-y-4">
+                <div class="w-full">
+                    <div class="bg-blue-600 text-white p-3.5 rounded-xl shadow-sm flex items-center justify-between">
                         <div>
-                            <h4 class="text-sm sm:text-base font-bold text-amber-400">Administrative Portal Dashboard</h4>
-                            <p class="text-[11px] sm:text-xs text-slate-300">Authorized Session Unlocked</p>
+                            <p class="text-[10px] opacity-80 uppercase font-bold tracking-wider">Total Students</p>
+                            <p class="text-xl font-extrabold mt-0.5" id="totalStudentsCount">0</p>
                         </div>
+                        <i class="fa-solid fa-users text-xl opacity-60"></i>
                     </div>
-
-                    <!-- Desktop Actions -->
-                    <div class="hidden sm:flex items-center gap-2">
-                        <button onclick="openAddTeacherModal()" class="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                            <i class="fa-solid fa-user-plus"></i> Add Teacher
-                        </button>
-                        <button onclick="lockAdminSession()" class="px-3.5 py-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                            <i class="fa-solid fa-lock text-rose-400"></i> Lock Panel
-                        </button>
-                    </div>
-
-                    <!-- Mobile Admin Hamburger Button -->
-                    <button onclick="toggleAdminMenu()" class="sm:hidden p-2 bg-slate-800 text-amber-400 border border-slate-700 rounded-xl text-sm focus:outline-none">
-                        <i id="admin-hamburger-icon" class="fa-solid fa-ellipsis-vertical px-1"></i>
-                    </button>
                 </div>
 
-                <!-- Admin Action Drawer (Mobile) -->
-                <div id="admin-action-drawer" class="hidden sm:hidden pt-3 border-t border-slate-800 grid grid-cols-2 gap-2">
-                    <button onclick="openAddTeacherModal(); toggleAdminMenu()" class="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                        <i class="fa-solid fa-user-plus"></i> Add Teacher
-                    </button>
-                    <button onclick="lockAdminSession(); toggleAdminMenu()" class="w-full py-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                        <i class="fa-solid fa-lock text-rose-400"></i> Lock Panel
-                    </button>
+                <!-- SMART BULK CSV UPLOAD -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center gap-2 border-b pb-2">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-excel text-emerald-600 text-base"></i>
+                            <h4 class="font-bold text-slate-800 text-xs sm:text-sm">Bulk Import (CSV)</h4>
+                        </div>
+                        <button type="button" onclick="downloadSampleCSV()" class="text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-download"></i> Sample
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-500">
+                        CSV mein sirf <b>Name</b> aur <b>Class</b> dalein. Auto username generate hoga.
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-stretch gap-2 pt-1">
+                        <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 cursor-pointer border rounded-lg p-1">
+                        <button onclick="processCSVUpload()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg transition flex-shrink-0 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Financial Summary Bar -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <div class="bg-emerald-50 border border-emerald-200 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-emerald-600 uppercase">Fees Paid</p>
-                        <h4 id="admin-stat-fees-paid" class="text-sm sm:text-xl font-extrabold text-emerald-800">0 Students</h4>
-                    </div>
-                    <i class="fa-solid fa-circle-check text-emerald-500 text-lg sm:text-2xl"></i>
-                </div>
-                <div class="bg-rose-50 border border-rose-200 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-rose-600 uppercase">Fees Unpaid</p>
-                        <h4 id="admin-stat-fees-unpaid" class="text-sm sm:text-xl font-extrabold text-rose-800">0 Students</h4>
-                    </div>
-                    <i class="fa-solid fa-circle-xmark text-rose-500 text-lg sm:text-2xl"></i>
-                </div>
-                <div class="bg-amber-50 border border-amber-200 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-amber-700 uppercase">Salary Done</p>
-                        <h4 id="admin-stat-sal-done" class="text-sm sm:text-xl font-extrabold text-amber-900">0 Faculty</h4>
-                    </div>
-                    <i class="fa-solid fa-wallet text-amber-600 text-lg sm:text-2xl"></i>
-                </div>
-                <div class="bg-slate-100 border border-slate-300 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-slate-600 uppercase">Salary Pending</p>
-                        <h4 id="admin-stat-sal-pending" class="text-sm sm:text-xl font-extrabold text-slate-800">0 Faculty</h4>
-                    </div>
-                    <i class="fa-solid fa-hourglass-half text-slate-500 text-lg sm:text-2xl"></i>
-                </div>
-            </div>
-
-            <!-- TEACHERS MANAGEMENT -->
-            <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm space-y-4 sm:space-y-5">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                    <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Faculty Management & Controls</h3>
-                        <p class="text-xs text-slate-500">Manage teacher details and attendance</p>
+            <!-- ADMIN PAGE 2: CLASS MANAGEMENT -->
+            <div id="adminClassPage" class="admin-page hidden space-y-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-1.5 border-b pb-2">
+                        <i class="fa-solid fa-layer-group text-blue-600 text-base"></i>
+                        <h4 class="font-bold text-slate-800 text-xs sm:text-sm">Class-Wide Bulk Updates</h4>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <!-- Excel Import Teacher Button -->
-                        <input type="file" id="excel-teacher-file" accept=".xlsx, .xls, .csv" class="hidden" onchange="importTeachersExcel(event)">
-                        <button onclick="document.getElementById('excel-teacher-file').click()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                            <i class="fa-solid fa-file-excel"></i> Import Teachers Excel
-                        </button>
+                    <form onsubmit="handleClassBulkUpdate(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">1. Select Section</label>
+                                <select id="bulkSectionSelect" onchange="onBulkSectionChange()" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white font-medium focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Select Section --</option>
+                                    <option value="Pre-Primary">Pre-Primary Section</option>
+                                    <option value="Primary">Primary Section</option>
+                                    <option value="Secondary">Secondary Section</option>
+                                </select>
+                            </div>
 
-                        <input id="admin-teacher-search" oninput="renderAdminTeachersTable()" type="text" placeholder="Search teacher..." class="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-400 w-full sm:w-48">
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                    <table class="w-full text-left border-collapse text-xs min-w-[600px]">
-                        <thead>
-                            <tr class="bg-slate-900 text-amber-400 font-bold uppercase">
-                                <th class="p-3">Teacher Name</th>
-                                <th class="p-3">Wing & Subject</th>
-                                <th class="p-3">Assigned Class</th>
-                                <th class="p-3">Attendance</th>
-                                <th class="p-3 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-teachers-tbody" class="divide-y divide-slate-200 text-slate-700">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- STUDENTS MANAGEMENT IN ADMIN PANEL -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                <!-- Add Student Form -->
-                <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm lg:col-span-1">
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1">Add New Student</h3>
-                    <p class="text-xs text-slate-500 mb-5">Enroll new student into school database</p>
-
-                    <form onsubmit="handleAddStudent(event)" class="space-y-3.5">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
-                            <input id="add-name" type="text" placeholder="e.g. Muhammad Ali" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-400">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">2. Select Class</label>
+                                <select id="bulkClassSelect" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white font-medium focus:ring-2 focus:ring-blue-500" disabled>
+                                    <option value="">-- Select Section First --</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Roll Number</label>
-                            <input id="add-roll" type="text" placeholder="e.g. 105" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-400">
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Notice Announcement</label>
+                            <input type="text" id="bulkNotice" placeholder="e.g. Mid-term exams start Monday." class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white">
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Academic Wing</label>
-                                <select id="add-wing" onchange="updateAddClassOptions()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                                    <option value="pre-primary">Pre-Primary</option>
-                                    <option value="primary">Primary</option>
-                                    <option value="secondary">Secondary</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Class</label>
-                                <select id="add-class" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none"></select>
-                            </div>
+                        <div>
+                            <label class="block font-semibold text-[11px] text-slate-700 mb-1"><i class="fa-solid fa-pen-ruler"></i> Homework (1 line per task)</label>
+                            <textarea id="bulkHomework" rows="2" placeholder="Math: Exercise 2.1&#10;English: Chapter 1 Questions" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Section</label>
-                                <select id="add-subsection" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                                    <option value="Rose">Rose Section</option>
-                                    <option value="Tulip">Tulip Section</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Monthly Fee (PKR)</label>
-                                <input id="add-monthly-fee" type="number" placeholder="e.g. 3500" required value="3500" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                            </div>
+                        <div>
+                            <label class="block font-semibold text-[11px] text-slate-700 mb-1">
+                                <i class="fa-solid fa-calendar-alt"></i> Time Table & Syllabus (Format: <b>Subject:TimeTable:Date Syllabus:Text</b>)
+                            </label>
+                            <textarea id="bulkSyllabus" rows="2" placeholder="Math:TimeTable:15 Aug/Monday/09:00 AM Syllabus:Chapter 1 to 3" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Initial Fee Status</label>
-                                <select id="add-fee-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                                    <option value="Paid">Paid</option>
-                                    <option value="Unpaid">Unpaid</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Monthly Attendance (%)</label>
-                                <input id="add-attendance-avg" type="number" min="0" max="100" value="90" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold rounded-xl text-xs transition shadow-sm mt-2 border border-slate-800">
-                            <i class="fa-solid fa-plus mr-1"></i> Register Student
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs shadow-sm transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-paper-plane"></i> Apply To Class
                         </button>
                     </form>
                 </div>
+            </div>
 
-                <!-- Student Directory Table -->
-                <div class="bg-white border border-slate-200 p-4 sm:p-6 rounded-3xl shadow-sm lg:col-span-2 space-y-4 sm:space-y-5">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Student Directory & Controls</h3>
-                            <p class="text-xs text-slate-500">Edit, remove, and manage student attendance status</p>
+            <!-- ADMIN PAGE 3: INDIVIDUAL STUDENT PROFILE -->
+            <div id="adminProfilePage" class="admin-page hidden space-y-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+                    <div class="flex justify-between items-center border-b pb-2 gap-2">
+                        <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider truncate" id="formTitle">Add / Edit Student Profile</h4>
+                        <button type="button" onclick="resetStudentForm()" class="text-[11px] text-blue-600 font-semibold hover:underline flex-shrink-0">Reset</button>
+                    </div>
+
+                    <form onsubmit="handleSaveStudent(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                            <input type="text" id="admUsername" placeholder="Username" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            <input type="password" id="admPass" placeholder="Password" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            <input type="text" id="admName" oninput="autoGenerateUsernameFromForm()" placeholder="Full Student Name" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            <input type="text" id="admRoll" placeholder="Roll No" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            
+                            <select id="admSection" required class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+                                <option value="">Select Section</option>
+                                <option value="Pre-Primary">Pre-Primary</option>
+                                <option value="Primary">Primary</option>
+                                <option value="Secondary">Secondary</option>
+                            </select>
+
+                            <input type="text" id="admClass" placeholder="Class (e.g. Class 6 Rose)" required class="px-2.5 py-1.5 border rounded-lg text-xs">
                         </div>
 
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <!-- Excel Import Student Button -->
-                            <input type="file" id="excel-student-file" accept=".xlsx, .xls, .csv" class="hidden" onchange="importStudentsExcel(event)">
-                            <button onclick="document.getElementById('excel-student-file').click()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-file-excel"></i> Import Students Excel
-                            </button>
+                        <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <div>
+                                <label class="block font-semibold text-[10px] text-slate-700 mb-0.5">Attendance (%)</label>
+                                <input type="number" id="admAttendance" min="0" max="100" placeholder="e.g. 95" required class="w-full px-2.5 py-1 border rounded-lg text-xs bg-white">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-[10px] text-slate-700 mb-0.5">Custom Avg (%)</label>
+                                <input type="number" id="admAvgResult" min="0" max="100" placeholder="Optional" class="w-full px-2.5 py-1 border rounded-lg text-xs bg-white">
+                            </div>
+                        </div>
 
-                            <input id="admin-student-search" oninput="renderAdminStudentTable()" type="text" placeholder="Search student or roll..." class="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-400 w-full sm:w-44">
+                        <div>
+                            <label class="block font-semibold text-[11px] text-slate-600 mb-1">Subject Marks (Format: Math: 85, English: 90)</label>
+                            <input type="text" id="admExams" placeholder="Math: 85, English: 78" class="w-full px-2.5 py-1.5 border rounded-lg text-xs">
+                        </div>
+
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 rounded-lg text-xs shadow-sm transition">
+                            Save Student Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ADMIN PAGE 4: REGISTERED STUDENTS TABLE -->
+            <div id="adminDirectoryPage" class="admin-page hidden space-y-4">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex flex-col gap-2 border-b pb-2">
+                        <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">All Students</h4>
+                        
+                        <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5">
+                            <div class="relative col-span-2 sm:col-span-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-[10px]"></i>
+                                <input type="text" id="searchStudentInput" oninput="renderAdminStudentTable()" placeholder="Search Name/Roll..." class="w-full pl-7 pr-2 py-1 border rounded-lg text-xs bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+
+                            <select id="filterSection" onchange="onTableSectionFilterChange()" class="px-2 py-1 border rounded-lg text-xs font-medium bg-slate-50">
+                                <option value="ALL">All Sections</option>
+                                <option value="Pre-Primary">Pre-Primary</option>
+                                <option value="Primary">Primary</option>
+                                <option value="Secondary">Secondary</option>
+                            </select>
+
+                            <select id="filterClass" onchange="renderAdminStudentTable()" class="px-2 py-1 border rounded-lg text-xs font-medium bg-slate-50">
+                                <option value="ALL">All Classes</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                        <table class="w-full text-left border-collapse text-xs min-w-[650px]">
-                            <thead>
-                                <tr class="bg-slate-900 text-amber-400 font-bold uppercase">
-                                    <th class="p-3">Roll</th>
-                                    <th class="p-3">Student Name</th>
-                                    <th class="p-3">Wing & Class</th>
-                                    <th class="p-3">Monthly Att %</th>
-                                    <th class="p-3 text-right">Actions</th>
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left text-xs text-slate-600 border-collapse">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th class="p-2 whitespace-nowrap">User</th>
+                                    <th class="p-2 whitespace-nowrap">Roll</th>
+                                    <th class="p-2 whitespace-nowrap">Name</th>
+                                    <th class="p-2 whitespace-nowrap">Class</th>
+                                    <th class="p-2 whitespace-nowrap">Att.</th>
+                                    <th class="p-2 whitespace-nowrap">Avg</th>
+                                    <th class="p-2 text-right whitespace-nowrap">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-student-tbody" class="divide-y divide-slate-200 text-slate-700">
-                            </tbody>
+                            <tbody id="studentTableBody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
+
         </section>
 
     </main>
 
-    <!-- MODALS -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-[10px] text-slate-400 mt-auto px-3">
+        The Vision School Management System &copy; 2026. All rights reserved.
+    </footer>
 
-    <!-- Admin Password Auth Modal -->
-    <div id="auth-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
-            <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center text-xl font-bold border border-amber-200">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            <div>
-                <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Admin Password Required</h3>
-                <p class="text-xs text-slate-500">Enter security key to access administrative features</p>
-            </div>
-            <div>
-                <input id="auth-password-input" type="password" placeholder="Enter admin password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-400">
-                <p id="auth-error-msg" class="text-xs text-rose-600 font-semibold mt-1 hidden">Incorrect password! Try again.</p>
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeAuthModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button onclick="submitAuthPassword()" class="px-5 py-2 rounded-xl bg-slate-900 text-amber-400 text-xs font-bold hover:bg-slate-800 shadow-sm">Authenticate</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Finance Auth Modal -->
-    <div id="finance-auth-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4">
-            <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center text-xl font-bold border border-emerald-200">
-                <i class="fa-solid fa-coins"></i>
-            </div>
-            <div>
-                <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Finance Portal Password Required</h3>
-                <p class="text-xs text-slate-500">Enter accountant key to access financial controls</p>
-            </div>
-            <div>
-                <input id="finance-password-input" type="password" placeholder="Enter finance password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-400">
-                <p id="finance-error-msg" class="text-xs text-rose-600 font-semibold mt-1 hidden">Incorrect finance password!</p>
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeFinanceAuthModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button onclick="submitFinancePassword()" class="px-5 py-2 rounded-xl bg-emerald-900 text-emerald-300 text-xs font-bold hover:bg-emerald-800 shadow-sm">Unlock Finance</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add/Edit Teacher Modal -->
-    <div id="teacher-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-        <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl my-8">
-            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-                <h3 id="teacher-modal-title" class="font-bold text-slate-900 text-sm sm:text-base">Faculty Teacher Details</h3>
-                <button onclick="closeTeacherModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form onsubmit="handleSaveTeacher(event)" class="space-y-3.5">
-                <input type="hidden" id="teacher-edit-id">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
-                    <input id="teacher-name" type="text" required placeholder="e.g. Ms. Sadia Khan" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-400">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Wing</label>
-                        <select id="teacher-wing" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                            <option value="pre-primary">Pre-Primary</option>
-                            <option value="primary">Primary</option>
-                            <option value="secondary">Secondary</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Subject</label>
-                        <input id="teacher-subject" type="text" required placeholder="e.g. Mathematics" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-400">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Assigned Class / Section</label>
-                        <input id="teacher-class" type="text" placeholder="e.g. Class 5 (Rose)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Monthly Salary (PKR)</label>
-                        <input id="teacher-salary-amount" type="number" required placeholder="e.g. 45000" value="45000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Attendance Status</label>
-                        <select id="teacher-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                            <option value="On Time">On Time (Present)</option>
-                            <option value="Late">Late (Present)</option>
-                            <option value="On Leave">On Leave</option>
-                            <option value="Absent">Absent</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Initial Salary Status</label>
-                        <select id="teacher-salary-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                            <option value="Salary Done">Salary Done</option>
-                            <option value="Salary Pending">Salary Pending</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeTeacherModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 text-amber-400 text-xs font-bold hover:bg-slate-800 shadow-sm">Save Teacher Record</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Student Modal -->
-    <div id="student-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-        <div class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl my-8">
-            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-                <h3 class="font-bold text-slate-900 text-sm sm:text-base">Edit Student Record</h3>
-                <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form onsubmit="handleSaveStudentEdit(event)" class="space-y-3.5">
-                <input type="hidden" id="edit-student-id">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
-                    <input id="edit-student-name" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-400">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Roll Number</label>
-                    <input id="edit-student-roll" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-400">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Academic Wing</label>
-                        <select id="edit-student-wing" onchange="updateEditClassOptions()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none">
-                            <option value="pre-primary">Pre-Primary</option>
-                            <option value="primary">Primary</option>
-                            <option value="secondary">Secondary</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Class</label>
-                        <select id="edit-student-class" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none"></select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Section</label>
-                        <select id="edit-student-section" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-900 focus:outline-none">
-                            <option value="Rose">Rose</option>
-                            <option value="Tulip">Tulip</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Monthly Fee (PKR)</label>
-                        <input id="edit-student-fee-amount" type="number" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-900 focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1">Monthly Attendance %</label>
-                        <input id="edit-student-attendance-avg" type="number" min="0" max="100" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-900 focus:outline-none">
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeStudentModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 text-amber-400 text-xs font-bold hover:bg-slate-800 shadow-sm">Update Student</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Notification Popup -->
-    <div id="notify-popup" class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
-        <div class="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-amber-400/40 flex items-center gap-3">
-            <div id="notify-icon" class="text-amber-400 text-base sm:text-lg"><i class="fa-solid fa-circle-check"></i></div>
-            <p id="notify-msg" class="text-xs font-semibold">Action completed successfully</p>
-        </div>
-    </div>
-
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        const ADMIN_PASSWORD = "The vision School";
-        const FINANCE_PASSWORD = "finance123";
-        let isAuthUnlocked = false;
-        let isFinanceUnlocked = false;
-        let pendingTabSwitch = null;
-
-        let selectedSubSections = {
-            'pre-primary': 'Rose',
-            'primary': 'Rose',
-            'secondary': 'Rose'
-        };
-
-        let students = [
-            { id: 101, name: 'Ahmad Hassan', roll: '101', wing: 'pre-primary', className: 'Nursery', subSection: 'Rose', status: 'Present', feeStatus: 'Paid', monthlyFee: 3000, monthlyAttendance: 92 },
-            { id: 102, name: 'Zainab Fatima', roll: '102', wing: 'pre-primary', className: 'Nursery', subSection: 'Rose', status: 'Present', feeStatus: 'Unpaid', monthlyFee: 3000, monthlyAttendance: 88 },
-            { id: 103, name: 'Mustafa Khan', roll: '103', wing: 'pre-primary', className: 'Nursery', subSection: 'Tulip', status: 'Absent', feeStatus: 'Paid', monthlyFee: 3000, monthlyAttendance: 75 },
-            { id: 104, name: 'Syeda Sara', roll: '201', wing: 'primary', className: 'Class 3', subSection: 'Rose', status: 'Present', feeStatus: 'Paid', monthlyFee: 3500, monthlyAttendance: 96 },
-            { id: 105, name: 'Hamza Malik', roll: '202', wing: 'primary', className: 'Class 3', subSection: 'Tulip', status: 'Late', feeStatus: 'Unpaid', monthlyFee: 3500, monthlyAttendance: 82 },
-            { id: 106, name: 'Usman Ghani', roll: '301', wing: 'secondary', className: 'Class 9', subSection: 'Rose', status: 'Present', feeStatus: 'Paid', monthlyFee: 4500, monthlyAttendance: 90 }
-        ];
-
-        let teachers = [
-            { id: 1, name: 'Ms. Sadia Khan', wing: 'pre-primary', subject: 'English & Arts', assignedClass: 'Nursery (Rose)', status: 'On Time', salaryStatus: 'Salary Done', salary: 40000 },
-            { id: 2, name: 'Mrs. Hina Tariq', wing: 'pre-primary', subject: 'General Knowledge', assignedClass: 'Playgroup (Tulip)', status: 'Late', salaryStatus: 'Salary Pending', salary: 38000 },
-            { id: 3, name: 'Mr. Imran Shah', wing: 'primary', subject: 'Mathematics', assignedClass: 'Class 3 & 4', status: 'On Time', salaryStatus: 'Salary Done', salary: 45000 },
-            { id: 4, name: 'Ms. Maryam Ali', wing: 'primary', subject: 'Science', assignedClass: 'Class 5 (Rose)', status: 'On Leave', salaryStatus: 'Salary Pending', salary: 42000 },
-            { id: 5, name: 'Sir Khurram Nawaz', wing: 'secondary', subject: 'Physics', assignedClass: 'Class 9 & 10', status: 'On Time', salaryStatus: 'Salary Done', salary: 55000 },
-            { id: 6, name: 'Mrs. Aisha Siddiqui', wing: 'secondary', subject: 'Chemistry', assignedClass: 'Class 8 & 9', status: 'Absent', salaryStatus: 'Salary Pending', salary: 50000 }
-        ];
-
-        window.addEventListener('DOMContentLoaded', () => {
-            updateAddClassOptions();
-            updateDashboardStats();
-            renderTeachersPublic();
-        });
-
-        /* --- DASHBOARD CALCULATIONS --- */
-        function updateDashboardStats() {
-            // Student stats
-            const totalEnrolled = students.length;
-            const avgAttendance = totalEnrolled > 0 
-                ? Math.round(students.reduce((acc, s) => acc + (s.monthlyAttendance || 0), 0) / totalEnrolled)
-                : 0;
-            const paidStudentsCount = students.filter(s => s.feeStatus === 'Paid').length;
-            const unpaidStudentsCount = totalEnrolled - paidStudentsCount;
-
-            document.getElementById('stat-total').innerText = totalEnrolled;
-            document.getElementById('stat-attendance-avg').innerText = avgAttendance + '%';
-            document.getElementById('stat-fees-paid').innerText = paidStudentsCount;
-
-            // Teacher stats
-            const totalTeachers = teachers.length;
-            const presentTeachers = teachers.filter(t => t.status === 'On Time' || t.status === 'Late').length;
-            const salaryDoneCount = teachers.filter(t => t.salaryStatus === 'Salary Done').length;
-            const salaryPendingCount = totalTeachers - salaryDoneCount;
-
-            document.getElementById('stat-teachers').innerText = totalTeachers;
-            document.getElementById('stat-teachers-present').innerText = presentTeachers;
-
-            // Finance stats
-            const totalCollected = students.filter(s => s.feeStatus === 'Paid').reduce((acc, s) => acc + (s.monthlyFee || 0), 0);
-            const totalPending = students.filter(s => s.feeStatus === 'Unpaid').reduce((acc, s) => acc + (s.monthlyFee || 0), 0);
-
-            const finCollected = document.getElementById('fin-stat-collected');
-            const finPending = document.getElementById('fin-stat-pending');
-            const finPaidStud = document.getElementById('fin-stat-paid-students');
-            const finSalStat = document.getElementById('fin-stat-salary-status');
-
-            if (finCollected) finCollected.innerText = `PKR ${totalCollected.toLocaleString()}`;
-            if (finPending) finPending.innerText = `PKR ${totalPending.toLocaleString()}`;
-            if (finPaidStud) finPaidStud.innerText = `${paidStudentsCount} / ${totalEnrolled}`;
-            if (finSalStat) finSalStat.innerText = `${salaryDoneCount}/${totalTeachers} Done`;
-
-            // Admin stats
-            const admPaid = document.getElementById('admin-stat-fees-paid');
-            const admUnpaid = document.getElementById('admin-stat-fees-unpaid');
-            const admSalDone = document.getElementById('admin-stat-sal-done');
-            const admSalPending = document.getElementById('admin-stat-sal-pending');
-
-            if (admPaid) admPaid.innerText = `${paidStudentsCount} Students`;
-            if (admUnpaid) admUnpaid.innerText = `${unpaidStudentsCount} Students`;
-            if (admSalDone) admSalDone.innerText = `${salaryDoneCount} Faculty`;
-            if (admSalPending) admSalPending.innerText = `${salaryPendingCount} Faculty`;
-        }
-
-        /* --- EXCEL IMPORT LOGIC --- */
-        function importStudentsExcel(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.SheetNames[0];
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-
-                    let count = 0;
-                    rows.forEach((row, index) => {
-                        const name = row.Name || row.name || row['Student Name'] || row['STUDENT NAME'];
-                        const className = row.Class || row.class || row['Class Name'] || 'Class 1';
-
-                        if (name) {
-                            let wing = 'primary';
-                            const lowerClass = String(className).toLowerCase();
-                            if (lowerClass.includes('play') || lowerClass.includes('nursery') || lowerClass.includes('prep') || lowerClass.includes('kg')) {
-                                wing = 'pre-primary';
-                            } else if (lowerClass.includes('6') || lowerClass.includes('7') || lowerClass.includes('8') || lowerClass.includes('9') || lowerClass.includes('10')) {
-                                wing = 'secondary';
-                            }
-
-                            students.push({
-                                id: Date.now() + index,
-                                name: String(name).trim(),
-                                roll: String(100 + students.length + 1),
-                                wing: wing,
-                                className: String(className).trim(),
-                                subSection: 'Rose',
-                                monthlyFee: 3500,
-                                feeStatus: 'Unpaid',
-                                monthlyAttendance: 90,
-                                status: 'Present'
-                            });
-                            count++;
-                        }
-                    });
-
-                    updateDashboardStats();
-                    renderAdminStudentTable();
-                    renderFinanceStudentTable();
-                    showNotification(`${count} Students imported from Excel!`);
-                } catch (err) {
-                    showNotification("Failed to parse Excel file!", false);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-            event.target.value = '';
-        }
-
-        function importTeachersExcel(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.SheetNames[0];
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-
-                    let count = 0;
-                    rows.forEach((row, index) => {
-                        const name = row.Name || row.name || row['Teacher Name'] || row['TEACHER NAME'];
-
-                        if (name) {
-                            teachers.push({
-                                id: Date.now() + index,
-                                name: String(name).trim(),
-                                wing: 'primary',
-                                subject: 'General',
-                                assignedClass: 'Unassigned',
-                                salary: 40000,
-                                status: 'On Time',
-                                salaryStatus: 'Salary Pending'
-                            });
-                            count++;
-                        }
-                    });
-
-                    updateDashboardStats();
-                    renderAdminTeachersTable();
-                    renderFinanceTeacherTable();
-                    renderTeachersPublic();
-                    showNotification(`${count} Teachers imported from Excel!`);
-                } catch (err) {
-                    showNotification("Failed to parse Excel file!", false);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-            event.target.value = '';
-        }
-
-        /* --- EXPORT DATA LOGIC --- */
-        function exportData() {
-            const wb = XLSX.utils.book_new();
+        // NOTIFICATION TOAST
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
             
-            const studentWsData = students.map(s => ({
-                'Roll No': s.roll,
-                'Student Name': s.name,
-                'Wing': s.wing,
-                'Class': s.className,
-                'Section': s.subSection,
-                'Monthly Fee (PKR)': s.monthlyFee,
-                'Fee Status': s.feeStatus,
-                'Monthly Attendance %': s.monthlyAttendance
-            }));
-            const wsStudents = XLSX.utils.json_to_sheet(studentWsData);
-            XLSX.utils.book_append_sheet(wb, wsStudents, "Students");
+            const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
 
-            const teacherWsData = teachers.map(t => ({
-                'Teacher Name': t.name,
-                'Wing': t.wing,
-                'Subject': t.subject,
-                'Assigned Class': t.assignedClass,
-                'Salary (PKR)': t.salary,
-                'Salary Status': t.salaryStatus,
-                'Attendance Status': t.status
-            }));
-            const wsTeachers = XLSX.utils.json_to_sheet(teacherWsData);
-            XLSX.utils.book_append_sheet(wb, wsTeachers, "Teachers");
+            toast.className = `toast ${bgColor} text-white px-3 py-2 rounded-xl shadow-xl flex items-center justify-between text-xs font-semibold border border-white/20`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid ${icon} text-sm"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+            `;
 
-            XLSX.writeFile(wb, "The_Vision_School_Records.xlsx");
-            showNotification("Data exported to Excel sheet!");
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if(toast) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-100%)';
+                    toast.style.transition = 'all 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 3500);
         }
 
-        /* --- HAMBURGER MENU TOGGLES --- */
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            const icon = document.getElementById('hamburger-icon');
-            menu.classList.toggle('hidden');
-            if (menu.classList.contains('hidden')) {
-                icon.className = 'fa-solid fa-bars';
-            } else {
-                icon.className = 'fa-solid fa-xmark';
-            }
+        // HAMBURGER TOGGLES
+        function toggleStudentMenu() {
+            document.getElementById('studentNavDrawer').classList.toggle('hidden');
         }
 
         function toggleAdminMenu() {
-            const drawer = document.getElementById('admin-action-drawer');
-            drawer.classList.toggle('hidden');
+            document.getElementById('adminNavDrawer').classList.toggle('hidden');
         }
 
-        function showNotification(message, isSuccess = true) {
-            const popup = document.getElementById('notify-popup');
-            const msgEl = document.getElementById('notify-msg');
-            const iconEl = document.getElementById('notify-icon');
+        // PAGE SWITCHERS WITH ACTIVE HIGHLIGHT
+        function switchStudentPage(pageId) {
+            document.querySelectorAll('.student-page').forEach(page => page.classList.add('hidden'));
+            const target = document.getElementById(pageId);
+            if(target) target.classList.remove('hidden');
 
-            msgEl.innerText = message;
-            iconEl.innerHTML = isSuccess ? '<i class="fa-solid fa-circle-check text-amber-400"></i>' : '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>';
+            document.querySelectorAll('#studentNavDrawer .nav-btn').forEach(btn => btn.classList.remove('active-nav-student'));
+            const activeBtn = document.getElementById(`stBtn-${pageId}`);
+            if(activeBtn) activeBtn.classList.add('active-nav-student');
 
-            popup.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-
-            setTimeout(() => {
-                popup.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 3000);
+            document.getElementById('studentNavDrawer').classList.add('hidden');
         }
 
-        function switchTab(tabId) {
-            if (tabId === 'admin' && !isAuthUnlocked) {
-                pendingTabSwitch = tabId;
-                openAuthModal();
-                return;
-            }
+        function switchAdminPage(pageId) {
+            document.querySelectorAll('.admin-page').forEach(page => page.classList.add('hidden'));
+            const target = document.getElementById(pageId);
+            if(target) target.classList.remove('hidden');
 
-            if (tabId === 'finance' && !isFinanceUnlocked) {
-                pendingTabSwitch = tabId;
-                openFinanceAuthModal();
-                return;
-            }
+            document.querySelectorAll('#adminNavDrawer .nav-btn').forEach(btn => btn.classList.remove('active-nav-admin'));
+            const activeBtn = document.getElementById(`admBtn-${pageId}`);
+            if(activeBtn) activeBtn.classList.add('active-nav-admin');
 
-            document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
-            document.getElementById('page-' + tabId).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-amber-400', 'text-slate-950', 'shadow-sm');
-                btn.classList.add('text-slate-300');
-            });
-
-            const activeBtn = document.getElementById('tab-' + tabId);
-            if (activeBtn) {
-                activeBtn.classList.add('bg-amber-400', 'text-slate-950', 'shadow-sm');
-                activeBtn.classList.remove('text-slate-300');
-            }
-
-            if (['pre-primary', 'primary', 'secondary'].includes(tabId)) {
-                renderAttendance(tabId);
-            } else if (tabId === 'teachers') {
-                renderTeachersPublic();
-            } else if (tabId === 'finance') {
-                renderFinanceStudentTable();
-                renderFinanceTeacherTable();
-            } else if (tabId === 'admin') {
-                renderAdminTeachersTable();
-                renderAdminStudentTable();
-            }
+            document.getElementById('adminNavDrawer').classList.add('hidden');
         }
 
-        /* --- AUTH MODALS & LOCK CONTROLS --- */
-        function openAuthModal() {
-            document.getElementById('auth-password-input').value = '';
-            document.getElementById('auth-error-msg').classList.add('hidden');
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
+        // SECTION -> CLASS MAPPING
+        const baseClassesBySection = {
+            "Pre-Primary": ["Playgroup", "Nursery", "KG"],
+            "Primary": ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5"],
+            "Secondary": ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10th"]
+        };
 
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-            pendingTabSwitch = null;
-        }
-
-        function submitAuthPassword() {
-            const input = document.getElementById('auth-password-input').value;
-            if (input === ADMIN_PASSWORD) {
-                isAuthUnlocked = true;
-                closeAuthModal();
-                showNotification("Admin authenticated successfully!");
-                if (pendingTabSwitch) switchTab(pendingTabSwitch);
-            } else {
-                document.getElementById('auth-error-msg').classList.remove('hidden');
-            }
-        }
-
-        function openFinanceAuthModal() {
-            document.getElementById('finance-password-input').value = '';
-            document.getElementById('finance-error-msg').classList.add('hidden');
-            document.getElementById('finance-auth-modal').classList.remove('hidden');
-        }
-
-        function closeFinanceAuthModal() {
-            document.getElementById('finance-auth-modal').classList.add('hidden');
-            pendingTabSwitch = null;
-        }
-
-        function submitFinancePassword() {
-            const input = document.getElementById('finance-password-input').value;
-            if (input === FINANCE_PASSWORD) {
-                isFinanceUnlocked = true;
-                closeFinanceAuthModal();
-                showNotification("Finance Panel Unlocked Successfully!");
-                if (pendingTabSwitch) switchTab(pendingTabSwitch);
-            } else {
-                document.getElementById('finance-error-msg').classList.remove('hidden');
-            }
-        }
-
-        function lockAdminSession() {
-            isAuthUnlocked = false;
-            switchTab('dashboard');
-            showNotification("Admin panel session locked.");
-        }
-
-        function lockFinanceSession() {
-            isFinanceUnlocked = false;
-            switchTab('dashboard');
-            showNotification("Finance panel session locked.");
-        }
-
-        /* --- WINGS ATTENDANCE --- */
-        function setSubSection(wing, subName) {
-            selectedSubSections[wing] = subName;
-
-            const roseBtn = document.getElementById(`btn-${wing}-rose`);
-            const tulipBtn = document.getElementById(`btn-${wing}-tulip`);
-
-            if (subName === 'Rose') {
-                roseBtn.className = "sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-amber-400 shadow-sm";
-                tulipBtn.className = "sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600";
-            } else {
-                tulipBtn.className = "sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm";
-                roseBtn.className = "sub-btn flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600";
-            }
-
-            renderAttendance(wing);
-        }
-
-        function renderAttendance(wing) {
-            const classSelect = document.getElementById(`select-${wing}-class`);
-            const targetClass = classSelect ? classSelect.value : '';
-            const subSection = selectedSubSections[wing];
-            const searchVal = (document.getElementById(`search-${wing}`)?.value || '').toLowerCase();
-            const grid = document.getElementById(`grid-${wing}`);
-
-            const filtered = students.filter(s => 
-                s.wing === wing && 
-                s.className === targetClass && 
-                s.subSection === subSection &&
-                (s.name.toLowerCase().includes(searchVal) || s.roll.includes(searchVal))
-            );
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full py-12 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                        <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-300"></i>
-                        <p class="text-xs font-semibold">No students found in this register</p>
-                    </div>
-                `;
-                return;
-            }
-
-            grid.innerHTML = filtered.map(s => {
-                return `
-                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] font-mono text-slate-500">Roll #${s.roll} • ${s.className}</span>
-                            <h4 class="font-bold text-slate-900 text-sm mt-0.5">${s.name}</h4>
-                        </div>
-                        <div class="flex flex-col items-end gap-1">
-                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full ${s.subSection === 'Rose' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}">
-                                ${s.subSection}
-                            </span>
-                            <span class="px-2 py-0.5 text-[9px] font-bold rounded-md ${s.feeStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
-                                ${s.feeStatus === 'Paid' ? 'Fee Paid' : 'Fee Unpaid'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-1.5 pt-2 border-t border-slate-100">
-                        <div class="flex items-center justify-between text-xs font-medium text-slate-500">
-                            <span>Monthly Attendance Avg:</span>
-                            <span class="font-bold text-indigo-600">${s.monthlyAttendance}%</span>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
-
-        /* --- TEACHERS PUBLIC --- */
-        function renderTeachersPublic() {
-            const wingFilter = document.getElementById('filter-teacher-wing').value;
-            const searchVal = (document.getElementById('search-teacher')?.value || '').toLowerCase();
-            const grid = document.getElementById('grid-teachers-public');
-
-            const filtered = teachers.filter(t => 
-                (wingFilter === 'all' || t.wing === wingFilter) &&
-                (t.name.toLowerCase().includes(searchVal) || t.subject.toLowerCase().includes(searchVal))
-            );
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">No teachers found</div>`;
-                return;
-            }
-
-            grid.innerHTML = filtered.map(t => {
-                let badgeStyle = "bg-teal-50 text-teal-700 border-teal-200";
-                let statusLabel = "Present (On Time)";
-
-                if (t.status === 'Late') {
-                    badgeStyle = "bg-amber-50 text-amber-700 border-amber-200";
-                    statusLabel = "Present (Late)";
-                } else if (t.status === 'On Leave') {
-                    badgeStyle = "bg-blue-50 text-blue-700 border-blue-200";
-                    statusLabel = "On Leave";
-                } else if (t.status === 'Absent') {
-                    badgeStyle = "bg-rose-50 text-rose-700 border-rose-200";
-                    statusLabel = "Absent";
-                }
-
-                return `
-                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200">${t.wing} Wing</span>
-                            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${badgeStyle}">${statusLabel}</span>
-                        </div>
-                        <h4 class="font-bold text-slate-900 text-sm">${t.name}</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1"><i class="fa-solid fa-book-open mr-1.5 text-slate-400"></i>${t.subject}</p>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5"><i class="fa-solid fa-chalkboard mr-1.5 text-slate-400"></i>${t.assignedClass || 'Unassigned'}</p>
-                    </div>
-
-                    <div class="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
-                        <span class="text-[10px] text-slate-400 italic">Faculty Record</span>
-                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md ${t.salaryStatus === 'Salary Done' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}">
-                            ${t.salaryStatus}
-                        </span>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
-
-        /* --- FINANCE PANEL LOGIC --- */
-        function renderFinanceStudentTable() {
-            const tbody = document.getElementById('fin-student-tbody');
-            const search = (document.getElementById('fin-search-student')?.value || '').toLowerCase();
-            const wingFilter = document.getElementById('fin-filter-wing')?.value || 'all';
-            const sectionFilter = document.getElementById('fin-filter-section')?.value || 'all';
-            const feeFilter = document.getElementById('fin-filter-fee')?.value || 'all';
-
-            const filtered = students.filter(s => 
-                (wingFilter === 'all' || s.wing === wingFilter) &&
-                (sectionFilter === 'all' || s.subSection === sectionFilter) &&
-                (feeFilter === 'all' || s.feeStatus === feeFilter) &&
-                (s.name.toLowerCase().includes(search) || s.roll.includes(search))
-            );
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No student records found</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(s => `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="p-3 font-mono font-semibold text-slate-500">${s.roll}</td>
-                    <td class="p-3 font-bold text-slate-900">${s.name}</td>
-                    <td class="p-3 text-slate-600 uppercase text-[11px] font-semibold">${s.wing} • ${s.className} (${s.subSection})</td>
-                    <td class="p-3 font-semibold text-slate-800">PKR ${s.monthlyFee}</td>
-                    <td class="p-3">
-                        <select onchange="updateStudentFeeDirect(${s.id}, this.value)" class="bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold px-2 py-1 focus:outline-none ${s.feeStatus === 'Paid' ? 'text-emerald-600' : 'text-rose-600'}">
-                            <option value="Paid" ${s.feeStatus === 'Paid' ? 'selected' : ''}>Paid</option>
-                            <option value="Unpaid" ${s.feeStatus === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
-                        </select>
-                    </td>
-                    <td class="p-3 text-right">
-                        <button onclick="toggleFeeStatus(${s.id})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold ${s.feeStatus === 'Paid' ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}">
-                            Mark as ${s.feeStatus === 'Paid' ? 'Unpaid' : 'Paid'}
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function updateStudentFeeDirect(id, newStatus) {
-            const student = students.find(s => s.id === id);
-            if (student) {
-                student.feeStatus = newStatus;
-                updateDashboardStats();
-                renderFinanceStudentTable();
-                renderAdminStudentTable();
-                showNotification(`Fee status for ${student.name} set to ${newStatus}`);
-            }
-        }
-
-        function toggleFeeStatus(id) {
-            const student = students.find(s => s.id === id);
-            if (student) {
-                student.feeStatus = student.feeStatus === 'Paid' ? 'Unpaid' : 'Paid';
-                updateDashboardStats();
-                renderFinanceStudentTable();
-                renderAdminStudentTable();
-                showNotification(`Fee status updated for ${student.name}`);
-            }
-        }
-
-        function renderFinanceTeacherTable() {
-            const tbody = document.getElementById('fin-teacher-tbody');
-            const salaryFilter = document.getElementById('fin-filter-salary')?.value || 'all';
-
-            const filtered = teachers.filter(t => salaryFilter === 'all' || t.salaryStatus === salaryFilter);
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No teacher records found</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(t => `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="p-3 font-bold text-slate-900">${t.name}</td>
-                    <td class="p-3 text-slate-600 uppercase text-[11px] font-semibold">${t.wing} • ${t.subject}</td>
-                    <td class="p-3 font-semibold text-slate-800">PKR ${t.salary || 40000}</td>
-                    <td class="p-3">
-                        <select onchange="updateTeacherSalaryDirect(${t.id}, this.value)" class="bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold px-2 py-1 focus:outline-none ${t.salaryStatus === 'Salary Done' ? 'text-amber-700' : 'text-slate-600'}">
-                            <option value="Salary Done" ${t.salaryStatus === 'Salary Done' ? 'selected' : ''}>Salary Done</option>
-                            <option value="Salary Pending" ${t.salaryStatus === 'Salary Pending' ? 'selected' : ''}>Salary Pending</option>
-                        </select>
-                    </td>
-                    <td class="p-3 text-right">
-                        <button onclick="toggleTeacherSalary(${t.id})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold ${t.salaryStatus === 'Salary Done' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}">
-                            Set ${t.salaryStatus === 'Salary Done' ? 'Pending' : 'Done'}
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function toggleTeacherSalary(id) {
-            const teacher = teachers.find(t => t.id === id);
-            if (teacher) {
-                teacher.salaryStatus = teacher.salaryStatus === 'Salary Done' ? 'Salary Pending' : 'Salary Done';
-                updateDashboardStats();
-                renderFinanceTeacherTable();
-                renderAdminTeachersTable();
-                showNotification(`Salary status updated for ${teacher.name}`);
-            }
-        }
-
-        /* --- ADMIN TABLES LOGIC --- */
-        function renderAdminTeachersTable() {
-            const tbody = document.getElementById('admin-teachers-tbody');
-            const searchVal = (document.getElementById('admin-teacher-search')?.value || '').toLowerCase();
-
-            const filtered = teachers.filter(t => 
-                t.name.toLowerCase().includes(searchVal) || t.subject.toLowerCase().includes(searchVal)
-            );
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No teacher records found</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(t => `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="p-3 font-bold text-slate-900">${t.name}</td>
-                    <td class="p-3 text-slate-600 uppercase text-[11px] font-semibold">${t.wing} • ${t.subject}</td>
-                    <td class="p-3 text-slate-600">${t.assignedClass || 'N/A'}</td>
-                    <td class="p-3">
-                        <select onchange="updateTeacherStatusDirect(${t.id}, this.value)" class="bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold px-2 py-1 focus:outline-none">
-                            <option value="On Time" ${t.status === 'On Time' ? 'selected' : ''}>On Time</option>
-                            <option value="Late" ${t.status === 'Late' ? 'selected' : ''}>Late</option>
-                            <option value="On Leave" ${t.status === 'On Leave' ? 'selected' : ''}>On Leave</option>
-                            <option value="Absent" ${t.status === 'Absent' ? 'selected' : ''}>Absent</option>
-                        </select>
-                    </td>
-                    <td class="p-3 text-right space-x-2">
-                        <button onclick="editTeacher(${t.id})" class="text-amber-700 hover:text-amber-900 font-bold text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                        <button onclick="deleteTeacher(${t.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs"><i class="fa-solid fa-trash-can"></i> Delete</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function updateTeacherStatusDirect(id, newStatus) {
-            const teacher = teachers.find(t => t.id === id);
-            if (teacher) {
-                teacher.status = newStatus;
-                updateDashboardStats();
-                showNotification(`Status for ${teacher.name} updated to ${newStatus}`);
-            }
-        }
-
-        function updateTeacherSalaryDirect(id, newSalaryStatus) {
-            const teacher = teachers.find(t => t.id === id);
-            if (teacher) {
-                teacher.salaryStatus = newSalaryStatus;
-                updateDashboardStats();
-                renderAdminTeachersTable();
-                renderFinanceTeacherTable();
-                showNotification(`Salary status for ${teacher.name} set to ${newSalaryStatus}`);
-            }
-        }
-
-        function openAddTeacherModal() {
-            if (!isAuthUnlocked) {
-                openAuthModal();
-                return;
-            }
-            document.getElementById('teacher-edit-id').value = '';
-            document.getElementById('teacher-name').value = '';
-            document.getElementById('teacher-subject').value = '';
-            document.getElementById('teacher-class').value = '';
-            document.getElementById('teacher-salary-amount').value = '45000';
-            document.getElementById('teacher-status').value = 'On Time';
-            document.getElementById('teacher-salary-status').value = 'Salary Done';
-            document.getElementById('teacher-modal-title').innerText = "Add New Faculty Teacher";
-            document.getElementById('teacher-modal').classList.remove('hidden');
-        }
-
-        function editTeacher(id) {
-            const t = teachers.find(item => item.id === id);
-            if (!t) return;
-
-            document.getElementById('teacher-edit-id').value = t.id;
-            document.getElementById('teacher-name').value = t.name;
-            document.getElementById('teacher-wing').value = t.wing;
-            document.getElementById('teacher-subject').value = t.subject;
-            document.getElementById('teacher-class').value = t.assignedClass;
-            document.getElementById('teacher-salary-amount').value = t.salary || 40000;
-            document.getElementById('teacher-status').value = t.status;
-            document.getElementById('teacher-salary-status').value = t.salaryStatus;
-            document.getElementById('teacher-modal-title').innerText = "Edit Faculty Teacher Details";
-            document.getElementById('teacher-modal').classList.remove('hidden');
-        }
-
-        function closeTeacherModal() {
-            document.getElementById('teacher-modal').classList.add('hidden');
-        }
-
-        function handleSaveTeacher(e) {
-            e.preventDefault();
-            const editId = document.getElementById('teacher-edit-id').value;
-            const name = document.getElementById('teacher-name').value;
-            const wing = document.getElementById('teacher-wing').value;
-            const subject = document.getElementById('teacher-subject').value;
-            const assignedClass = document.getElementById('teacher-class').value;
-            const salary = parseFloat(document.getElementById('teacher-salary-amount').value) || 0;
-            const status = document.getElementById('teacher-status').value;
-            const salaryStatus = document.getElementById('teacher-salary-status').value;
-
-            if (editId) {
-                const index = teachers.findIndex(t => t.id == editId);
-                if (index !== -1) {
-                    teachers[index] = { id: Number(editId), name, wing, subject, assignedClass, salary, status, salaryStatus };
-                    showNotification("Teacher record updated!");
-                }
-            } else {
-                teachers.push({
-                    id: Date.now(),
-                    name, wing, subject, assignedClass, salary, status, salaryStatus
+        function getClassOptionsWithSubsections(sectionName) {
+            const list = [];
+            if (sectionName && baseClassesBySection[sectionName]) {
+                baseClassesBySection[sectionName].forEach(cls => {
+                    list.push(`${cls} Rose`);
+                    list.push(`${cls} Tulip`);
                 });
-                showNotification("New teacher added successfully!");
-            }
-
-            closeTeacherModal();
-            updateDashboardStats();
-            renderAdminTeachersTable();
-            renderFinanceTeacherTable();
-            renderTeachersPublic();
-        }
-
-        function deleteTeacher(id) {
-            if (confirm("Are you sure you want to delete this teacher?")) {
-                teachers = teachers.filter(t => t.id !== id);
-                updateDashboardStats();
-                renderAdminTeachersTable();
-                renderFinanceTeacherTable();
-                renderTeachersPublic();
-                showNotification("Teacher record deleted!");
-            }
-        }
-
-        /* --- ADMIN STUDENTS MANAGEMNET --- */
-        function updateAddClassOptions() {
-            const wing = document.getElementById('add-wing').value;
-            const classSelect = document.getElementById('add-class');
-            classSelect.innerHTML = getClassOptionsForWing(wing);
-        }
-
-        function updateEditClassOptions() {
-            const wing = document.getElementById('edit-student-wing').value;
-            const classSelect = document.getElementById('edit-student-class');
-            classSelect.innerHTML = getClassOptionsForWing(wing);
-        }
-
-        function getClassOptionsForWing(wing) {
-            if (wing === 'pre-primary') {
-                return `<option value="Playgroup">Playgroup</option><option value="Nursery">Nursery</option><option value="Prep">Prep</option>`;
-            } else if (wing === 'primary') {
-                return `<option value="Class 1">Class 1</option><option value="Class 2">Class 2</option><option value="Class 3">Class 3</option><option value="Class 4">Class 4</option><option value="Class 5">Class 5</option>`;
             } else {
-                return `<option value="Class 6">Class 6</option><option value="Class 7">Class 7</option><option value="Class 8">Class 8</option><option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>`;
+                for (let sec in baseClassesBySection) {
+                    baseClassesBySection[sec].forEach(cls => {
+                        list.push(`${cls} Rose`);
+                        list.push(`${cls} Tulip`);
+                    });
+                }
+            }
+            return list;
+        }
+
+        function getSectionFromClass(className) {
+            if(!className) return "Primary";
+            className = className.trim().toLowerCase();
+            if (["playgroup", "nursery", "nurcery", "kg"].some(v => className.includes(v))) return "Pre-Primary";
+            
+            const numMatch = className.match(/\d+/);
+            if (numMatch) {
+                const num = parseInt(numMatch[0], 10);
+                if (num >= 6) return "Secondary";
+                return "Primary";
+            }
+            return "Primary";
+        }
+
+        function normalizeClassName(clsName) {
+            if(!clsName) return "Class 1 Rose";
+            let str = clsName.trim();
+            let hasTulip = str.toLowerCase().includes('tulip');
+            let hasRose = str.toLowerCase().includes('rose');
+            let subSec = hasTulip ? "Tulip" : (hasRose ? "Rose" : "Rose");
+
+            let cleanStr = str.toLowerCase().replace(/rose|tulip/gi, '').trim();
+
+            if(cleanStr.includes('playgroup')) return `Playgroup ${subSec}`;
+            if(cleanStr.includes('nursery') || cleanStr.includes('nurcery')) return `Nursery ${subSec}`;
+            if(cleanStr.includes('kg')) return `KG ${subSec}`;
+
+            const numMatch = cleanStr.match(/\d+/);
+            if(numMatch) {
+                return `Class ${numMatch[0]} ${subSec}`;
+            }
+
+            return `${str} ${subSec}`;
+        }
+
+        // DATABASE SETUP
+        let studentsData = JSON.parse(localStorage.getItem('vschool_students_v12')) || {
+            "jasim": {
+                password: "jasim123",
+                name: "Jasim Ahmed",
+                rollNo: "VS-101",
+                section: "Secondary",
+                class: "Class 6 Rose",
+                attendance: 92,
+                customAvgResult: null,
+                notice: "Mid-Term Examinations start from August 15.",
+                todayHomework: "Math: Exercise 2.3 Questions 1 to 5\nEnglish: Read Chapter 4 and write summary",
+                exams: { "Mathematics": 88, "Physics": 76, "English": 82 },
+                examSchedule: [
+                    { subject: "Mathematics", date: "15 Aug/Monday/09:00 AM", syllabus: "Chapters 1 to 4" },
+                    { subject: "Physics", date: "17 Aug/Wednesday/09:00 AM", syllabus: "Unit 1 & 2" }
+                ]
+            },
+            "tabish": {
+                password: "tabish123",
+                name: "Tabish Khan",
+                rollNo: "VS-102",
+                section: "Secondary",
+                class: "Class 6 Tulip",
+                attendance: 95,
+                customAvgResult: null,
+                notice: "",
+                todayHomework: "",
+                exams: { "Mathematics": 90, "English": 85 },
+                examSchedule: []
+            }
+        };
+
+        function saveToStorage() {
+            localStorage.setItem('vschool_students_v12', JSON.stringify(studentsData));
+            updateAdminStats();
+        }
+
+        function getNextRollNumber() {
+            let maxNum = 100;
+            for (let username in studentsData) {
+                const roll = studentsData[username].rollNo;
+                if (roll && roll.startsWith("VS-")) {
+                    const num = parseInt(roll.replace("VS-", ""), 10);
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            }
+            return maxNum + 1;
+        }
+
+        let activeStudentUser = localStorage.getItem('vschool_active_student') || null;
+
+        window.onload = function() {
+            if (activeStudentUser && studentsData[activeStudentUser]) {
+                showStudentDashboardScreen();
+            } else {
+                showLoginSection();
+            }
+            populateFilterClasses();
+            updateAdminStats();
+        };
+
+        function hideAllSections() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('adminAuthSection').classList.add('hidden');
+            document.getElementById('adminPanelSection').classList.add('hidden');
+            document.getElementById('studentMenuBtn').classList.add('hidden');
+            document.getElementById('adminMenuBtn').classList.add('hidden');
+        }
+
+        function showLoginSection() {
+            hideAllSections();
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('headerAdminBtnContainer').classList.remove('hidden');
+        }
+
+        function showAdminAuthScreen() {
+            hideAllSections();
+            document.getElementById('adminAuthSection').classList.remove('hidden');
+            document.getElementById('adminPasswordInput').value = '';
+        }
+
+        function goBackFromAdminAuth() {
+            if (activeStudentUser && studentsData[activeStudentUser]) {
+                showStudentDashboardScreen();
+            } else {
+                showLoginSection();
             }
         }
 
-        function handleAddStudent(e) {
-            e.preventDefault();
-            const name = document.getElementById('add-name').value;
-            const roll = document.getElementById('add-roll').value;
-            const wing = document.getElementById('add-wing').value;
-            const className = document.getElementById('add-class').value;
-            const subSection = document.getElementById('add-subsection').value;
-            const monthlyFee = parseFloat(document.getElementById('add-monthly-fee').value) || 0;
-            const feeStatus = document.getElementById('add-fee-status').value;
-            const monthlyAttendance = parseFloat(document.getElementById('add-attendance-avg').value) || 90;
-
-            students.push({
-                id: Date.now(),
-                name, roll, wing, className, subSection, monthlyFee, feeStatus, monthlyAttendance, status: 'Present'
-            });
-
-            e.target.reset();
-            updateAddClassOptions();
-            updateDashboardStats();
+        function showAdminPanelScreen() {
+            hideAllSections();
+            document.getElementById('adminPanelSection').classList.remove('hidden');
+            document.getElementById('adminMenuBtn').classList.remove('hidden');
+            document.getElementById('headerAdminBtnContainer').classList.add('hidden');
+            switchAdminPage('adminOverviewPage');
+            populateFilterClasses();
             renderAdminStudentTable();
-            renderFinanceStudentTable();
-            showNotification("Student enrolled successfully!");
+            updateAdminStats();
+        }
+
+        function showStudentDashboardScreen() {
+            hideAllSections();
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('studentMenuBtn').classList.remove('hidden');
+            document.getElementById('headerAdminBtnContainer').classList.remove('hidden');
+            switchStudentPage('homePage');
+            renderDashboard();
+        }
+
+        function updateAdminStats() {
+            const keys = Object.keys(studentsData);
+            document.getElementById('totalStudentsCount').innerText = keys.length;
+        }
+
+        function onBulkSectionChange() {
+            const sectionSelect = document.getElementById('bulkSectionSelect').value;
+            const classSelect = document.getElementById('bulkClassSelect');
+            
+            classSelect.innerHTML = '<option value="">-- Select Class --</option>';
+            if (sectionSelect) {
+                classSelect.disabled = false;
+                const classList = getClassOptionsWithSubsections(sectionSelect);
+                classList.forEach(cls => {
+                    classSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+                });
+            } else {
+                classSelect.disabled = true;
+                classSelect.innerHTML = '<option value="">-- Select Section First --</option>';
+            }
+        }
+
+        function populateFilterClasses() {
+            const sec = document.getElementById('filterSection').value;
+            const clsSelect = document.getElementById('filterClass');
+            
+            clsSelect.innerHTML = '<option value="ALL">All Classes</option>';
+            const options = getClassOptionsWithSubsections(sec === "ALL" ? null : sec);
+            options.forEach(cls => {
+                clsSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+            });
+        }
+
+        function onTableSectionFilterChange() {
+            populateFilterClasses();
+            renderAdminStudentTable();
+        }
+
+        function autoGenerateUsernameFromForm() {
+            const name = document.getElementById('admName').value.trim();
+            if(name) {
+                const cleanUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                document.getElementById('admUsername').value = cleanUsername;
+                document.getElementById('admPass').value = `${cleanUsername}123`;
+            }
+        }
+
+        function processCSVUpload() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showToast('Please select a CSV file first!', 'error');
+                return;
+            }
+
+            Papa.parse(file, {
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    let addedCount = 0;
+                    let currentRollNum = getNextRollNumber();
+                    const rows = results.data;
+
+                    if (!rows || rows.length === 0) {
+                        showToast('CSV File is empty!', 'error');
+                        return;
+                    }
+
+                    let startIdx = 0;
+                    const firstRow = rows[0].map(c => c ? c.toString().trim().toLowerCase() : '');
+                    
+                    if (firstRow.some(cell => cell.includes('name') || cell.includes('student') || cell.includes('class'))) {
+                        startIdx = 1; 
+                    }
+
+                    for (let i = startIdx; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length < 1) continue;
+
+                        let fullName = null;
+                        let rawClass = "Class 1 Rose";
+
+                        if (row.length === 1) {
+                            const parts = row[0].toString().trim().split(',');
+                            fullName = parts[0] ? parts[0].trim() : null;
+                            if (parts.length > 1) rawClass = parts[1].trim();
+                        } else {
+                            fullName = row[0] ? row[0].toString().trim() : null;
+                            rawClass = row[1] ? row[1].toString().trim() : "Class 1 Rose";
+                        }
+
+                        if (fullName) {
+                            let username = fullName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                            
+                            if (studentsData[username]) {
+                                username = `${username}${currentRollNum}`;
+                            }
+
+                            if (username.length > 0) {
+                                const formattedClass = normalizeClassName(rawClass);
+                                const section = getSectionFromClass(formattedClass);
+
+                                studentsData[username] = {
+                                    password: `${username}123`,
+                                    name: fullName,
+                                    rollNo: `VS-${currentRollNum}`,
+                                    section: section,
+                                    class: formattedClass,
+                                    attendance: 0,
+                                    customAvgResult: null,
+                                    notice: "",
+                                    todayHomework: "",
+                                    exams: {},
+                                    examSchedule: []
+                                };
+                                currentRollNum++;
+                                addedCount++;
+                            }
+                        }
+                    }
+
+                    if (addedCount > 0) {
+                        saveToStorage();
+                        renderAdminStudentTable();
+                        fileInput.value = ''; 
+                        showToast(`Imported ${addedCount} students!`, 'success');
+                    } else {
+                        showToast('Could not read CSV!', 'error');
+                    }
+                },
+                error: function() {
+                    showToast('Failed to parse CSV file!', 'error');
+                }
+            });
+        }
+
+        function downloadSampleCSV() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "name,class\n"
+                + "Ali Ahmed,5 tulip\n"
+                + "Muhammad Usama,6 rose\n"
+                + "Zainab Khan,7 tulip";
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "sample_student_list.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportStudentsToCSV() {
+            let csvRows = ["Username,RollNo,Name,Section,Class,Attendance"];
+            for (let [user, st] of Object.entries(studentsData)) {
+                csvRows.push(`"${user}","${st.rollNo || ''}","${st.name}","${st.section}","${st.class}","${st.attendance || 0}%"`);
+            }
+            const csvString = csvRows.join("\n");
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Registered_Students_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Student list exported!', 'success');
+        }
+
+        function handleClassBulkUpdate(e) {
+            e.preventDefault();
+            const section = document.getElementById('bulkSectionSelect').value;
+            const targetClass = document.getElementById('bulkClassSelect').value;
+            const notice = document.getElementById('bulkNotice').value.trim();
+            const homework = document.getElementById('bulkHomework').value.trim();
+            const syllabusStr = document.getElementById('bulkSyllabus').value.trim();
+
+            if (!section || !targetClass) {
+                showToast('Please select Section and Class!', 'error');
+                return;
+            }
+
+            const examSchedule = [];
+            if (syllabusStr) {
+                syllabusStr.split('\n').forEach(line => {
+                    line = line.trim();
+                    if (line !== '') {
+                        const match = line.match(/^([^:]+):TimeTable:\s*(.*?)\s*Syllabus:\s*(.*)$/i);
+                        if (match) {
+                            examSchedule.push({
+                                subject: match[1].trim(),
+                                date: match[2].trim(),
+                                syllabus: match[3].trim()
+                            });
+                        }
+                    }
+                });
+            }
+
+            let updatedCount = 0;
+            for (let username in studentsData) {
+                if (studentsData[username].class.toLowerCase() === targetClass.toLowerCase()) {
+                    studentsData[username].section = section;
+                    studentsData[username].notice = notice;
+                    studentsData[username].todayHomework = homework;
+                    studentsData[username].examSchedule = examSchedule;
+                    updatedCount++;
+                }
+            }
+
+            saveToStorage();
+            showToast(`Updated ${updatedCount} students in '${targetClass}'!`, 'success');
+        }
+
+        function handleStudentLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const pass = document.getElementById('loginPassword').value.trim();
+
+            if (studentsData[user] && studentsData[user].password === pass) {
+                activeStudentUser = user;
+                localStorage.setItem('vschool_active_student', user);
+                showToast(`Welcome back, ${studentsData[user].name}!`, 'success');
+                showStudentDashboardScreen();
+            } else {
+                showToast('Invalid username or password!', 'error');
+            }
+        }
+
+        function logoutStudent() {
+            activeStudentUser = null;
+            localStorage.removeItem('vschool_active_student');
+            showToast('Student logged out', 'success');
+            showLoginSection();
+        }
+
+        function renderDashboard() {
+            const st = studentsData[activeStudentUser];
+            if (!st) return;
+
+            document.getElementById('dashStudentName').innerText = `Welcome, ${st.name}!`;
+            document.getElementById('dashRollNo').innerText = st.rollNo || '-';
+            document.getElementById('dashSectionName').innerText = st.section || 'General';
+            document.getElementById('dashClass').innerText = st.class || '-';
+
+            document.getElementById('dashAttendance').innerText = `${st.attendance || 0}%`;
+
+            let calculatedAvg = 0;
+            let totalMarks = 0, totalSubjects = 0, examHtml = '';
+
+            if (st.exams && Object.keys(st.exams).length > 0) {
+                for (let [sub, mark] of Object.entries(st.exams)) {
+                    totalMarks += Number(mark);
+                    totalSubjects++;
+                    examHtml += `
+                        <div class="flex justify-between items-center border-b pb-1.5">
+                            <span class="font-semibold text-slate-700">${sub}</span>
+                            <span class="font-bold text-slate-900">${mark}%</span>
+                        </div>`;
+                }
+                calculatedAvg = (totalMarks / totalSubjects).toFixed(1);
+            } else {
+                examHtml = '<p class="text-xs text-slate-400">No subject marks added yet.</p>';
+            }
+
+            const finalAvg = st.customAvgResult !== null && st.customAvgResult !== undefined && st.customAvgResult !== ""
+                ? st.customAvgResult 
+                : calculatedAvg;
+
+            document.getElementById('dashAvgResult').innerText = `${finalAvg}%`;
+            document.getElementById('examList').innerHTML = examHtml;
+
+            document.getElementById('dashNotice').innerText = st.notice || "No active announcements for your class.";
+
+            const hwContainer = document.getElementById('dashTodayHomework');
+            if (st.todayHomework && st.todayHomework.trim() !== "") {
+                const hwLines = st.todayHomework.trim().split('\n');
+                let hwMarkup = '<ul class="space-y-1.5">';
+                hwLines.forEach(line => {
+                    if(line.trim() !== "") {
+                        hwMarkup += `<li class="flex items-start gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-100"><i class="fa-solid fa-check text-emerald-600 mt-0.5 flex-shrink-0"></i> <span>${line}</span></li>`;
+                    }
+                });
+                hwMarkup += '</ul>';
+                hwContainer.innerHTML = hwMarkup;
+            } else {
+                hwContainer.innerHTML = '<p class="italic text-slate-400">No homework assigned for today.</p>';
+            }
+
+            let schedHtml = '';
+            if (st.examSchedule && st.examSchedule.length > 0) {
+                st.examSchedule.forEach(ex => {
+                    schedHtml += `
+                        <div class="p-2.5 bg-indigo-50/50 rounded-lg border border-indigo-100 flex flex-col gap-1">
+                            <div class="flex justify-between items-center flex-wrap gap-1">
+                                <span class="font-bold text-indigo-900 text-xs">${ex.subject}</span>
+                                <span class="bg-indigo-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                    <i class="fa-regular fa-clock mr-0.5"></i> ${ex.date}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-600"><b>Syllabus:</b> ${ex.syllabus}</p>
+                        </div>`;
+                });
+            } else {
+                schedHtml = '<p class="text-xs text-slate-400">No time table or syllabus assigned yet.</p>';
+            }
+            document.getElementById('examScheduleList').innerHTML = schedHtml;
+        }
+
+        function verifyAdminPassword() {
+            const pwdInput = document.getElementById('adminPasswordInput').value;
+            if (pwdInput === "Vision123") {
+                showToast('Admin logged in', 'success');
+                showAdminPanelScreen();
+            } else {
+                showToast('Incorrect Admin Password!', 'error');
+            }
+        }
+
+        function logoutAdmin() {
+            showToast('Exited Admin Panel', 'success');
+            if (activeStudentUser && studentsData[activeStudentUser]) {
+                showStudentDashboardScreen();
+            } else {
+                showLoginSection();
+            }
         }
 
         function renderAdminStudentTable() {
-            const tbody = document.getElementById('admin-student-tbody');
-            const searchVal = (document.getElementById('admin-student-search')?.value || '').toLowerCase();
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
 
-            const filtered = students.filter(s => 
-                s.name.toLowerCase().includes(searchVal) || s.roll.includes(searchVal)
-            );
+            const selectedSection = document.getElementById('filterSection').value;
+            const selectedClass = document.getElementById('filterClass').value;
+            const searchQuery = document.getElementById('searchStudentInput').value.trim().toLowerCase();
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No student records found</td></tr>`;
-                return;
+            let matchesCount = 0;
+
+            for (let [username, st] of Object.entries(studentsData)) {
+                
+                if (searchQuery && !st.name.toLowerCase().includes(searchQuery) && !st.rollNo.toLowerCase().includes(searchQuery) && !username.includes(searchQuery)) {
+                    continue;
+                }
+
+                if (selectedSection !== "ALL" && st.section !== selectedSection) {
+                    continue;
+                }
+
+                if (selectedClass !== "ALL" && st.class.toLowerCase() !== selectedClass.toLowerCase()) {
+                    continue;
+                }
+
+                matchesCount++;
+
+                let avg = st.customAvgResult;
+                if(avg === null || avg === undefined || avg === "") {
+                    let total = 0, count = 0;
+                    if(st.exams) {
+                        for(let m of Object.values(st.exams)) { total += Number(m); count++; }
+                    }
+                    avg = count > 0 ? (total/count).toFixed(1) : 0;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-slate-50 transition">
+                        <td class="p-2 font-medium text-slate-800 whitespace-nowrap">${username}</td>
+                        <td class="p-2 whitespace-nowrap"><span class="bg-slate-100 text-slate-700 font-bold text-[10px] px-1.5 py-0.5 rounded">${st.rollNo || '-'}</span></td>
+                        <td class="p-2 whitespace-nowrap font-semibold">${st.name}</td>
+                        <td class="p-2 whitespace-nowrap font-semibold text-slate-700">${st.class}</td>
+                        <td class="p-2 whitespace-nowrap"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">${st.attendance || 0}%</span></td>
+                        <td class="p-2 whitespace-nowrap"><span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded">${avg}%</span></td>
+                        <td class="p-2 text-right space-x-1.5 whitespace-nowrap">
+                            <button onclick="editStudent('${username}')" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteStudent('${username}')" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>`;
             }
 
-            tbody.innerHTML = filtered.map(s => `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="p-3 font-mono font-semibold text-slate-500">${s.roll}</td>
-                    <td class="p-3 font-bold text-slate-900">${s.name}</td>
-                    <td class="p-3 text-slate-600 uppercase text-[11px] font-semibold">${s.wing} • ${s.className} (${s.subSection})</td>
-                    <td class="p-3 font-bold text-indigo-600">${s.monthlyAttendance}%</td>
-                    <td class="p-3 text-right space-x-2">
-                        <button onclick="editStudent(${s.id})" class="text-amber-700 hover:text-amber-900 font-bold text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                        <button onclick="deleteStudent(${s.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs"><i class="fa-solid fa-trash-can"></i> Delete</button>
-                    </td>
-                </tr>
-            `).join('');
+            if(matchesCount === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="p-4 text-center text-slate-400 italic">
+                            No students found.
+                        </td>
+                    </tr>`;
+            }
         }
 
-        function editStudent(id) {
-            const s = students.find(item => item.id === id);
-            if (!s) return;
-
-            document.getElementById('edit-student-id').value = s.id;
-            document.getElementById('edit-student-name').value = s.name;
-            document.getElementById('edit-student-roll').value = s.roll;
-            document.getElementById('edit-student-wing').value = s.wing;
-            updateEditClassOptions();
-            document.getElementById('edit-student-class').value = s.className;
-            document.getElementById('edit-student-section').value = s.subSection;
-            document.getElementById('edit-student-fee-amount').value = s.monthlyFee;
-            document.getElementById('edit-student-attendance-avg').value = s.monthlyAttendance;
-
-            document.getElementById('student-modal').classList.remove('hidden');
-        }
-
-        function closeStudentModal() {
-            document.getElementById('student-modal').classList.add('hidden');
-        }
-
-        function handleSaveStudentEdit(e) {
+        function handleSaveStudent(e) {
             e.preventDefault();
-            const id = Number(document.getElementById('edit-student-id').value);
-            const index = students.findIndex(s => s.id === id);
+            const username = document.getElementById('admUsername').value.trim().toLowerCase();
+            const pass = document.getElementById('admPass').value.trim();
+            const name = document.getElementById('admName').value.trim();
+            const roll = document.getElementById('admRoll').value.trim();
+            const section = document.getElementById('admSection').value;
+            const rawCls = document.getElementById('admClass').value.trim();
+            const cls = normalizeClassName(rawCls);
+            const attendance = Number(document.getElementById('admAttendance').value);
+            const customAvgResult = document.getElementById('admAvgResult').value !== "" ? Number(document.getElementById('admAvgResult').value) : null;
 
-            if (index !== -1) {
-                students[index].name = document.getElementById('edit-student-name').value;
-                students[index].roll = document.getElementById('edit-student-roll').value;
-                students[index].wing = document.getElementById('edit-student-wing').value;
-                students[index].className = document.getElementById('edit-student-class').value;
-                students[index].subSection = document.getElementById('edit-student-section').value;
-                students[index].monthlyFee = parseFloat(document.getElementById('edit-student-fee-amount').value) || 0;
-                students[index].monthlyAttendance = parseFloat(document.getElementById('edit-student-attendance-avg').value) || 0;
-
-                closeStudentModal();
-                updateDashboardStats();
-                renderAdminStudentTable();
-                renderFinanceStudentTable();
-                showNotification("Student record updated!");
+            const examsStr = document.getElementById('admExams').value.trim();
+            const exams = {};
+            if (examsStr) {
+                examsStr.split(',').forEach(item => {
+                    const parts = item.split(':');
+                    if (parts.length === 2 && parts[0].trim() !== '') {
+                        exams[parts[0].trim()] = Number(parts[1].trim());
+                    }
+                });
             }
+
+            const existing = studentsData[username] || {};
+
+            studentsData[username] = {
+                password: pass,
+                name: name,
+                rollNo: roll,
+                section: section,
+                class: cls,
+                attendance: attendance,
+                customAvgResult: customAvgResult,
+                notice: existing.notice || '',
+                todayHomework: existing.todayHomework || '',
+                exams: exams,
+                examSchedule: existing.examSchedule || []
+            };
+
+            saveToStorage();
+            renderAdminStudentTable();
+            resetStudentForm();
+            showToast('Student Profile saved!', 'success');
+            switchAdminPage('adminDirectoryPage');
         }
 
-        function deleteStudent(id) {
-            if (confirm("Are you sure you want to delete this student record?")) {
-                students = students.filter(s => s.id !== id);
-                updateDashboardStats();
+        function editStudent(username) {
+            const st = studentsData[username];
+            switchAdminPage('adminProfilePage');
+            document.getElementById('formTitle').innerText = `Editing: ${st.name}`;
+            document.getElementById('admUsername').value = username;
+            document.getElementById('admPass').value = st.password;
+            document.getElementById('admName').value = st.name;
+            document.getElementById('admRoll').value = st.rollNo;
+            document.getElementById('admSection').value = st.section || '';
+            document.getElementById('admClass').value = st.class;
+            document.getElementById('admAttendance').value = st.attendance || 0;
+            document.getElementById('admAvgResult').value = st.customAvgResult !== null && st.customAvgResult !== undefined ? st.customAvgResult : '';
+            
+            let examArr = [];
+            if (st.exams) {
+                for (let [sub, mark] of Object.entries(st.exams)) {
+                    examArr.push(`${sub}: ${mark}`);
+                }
+            }
+            document.getElementById('admExams').value = examArr.join(', ');
+        }
+
+        function resetStudentForm() {
+            document.getElementById('formTitle').innerText = 'Add / Edit Student Profile';
+            document.getElementById('admUsername').value = '';
+            document.getElementById('admPass').value = '';
+            document.getElementById('admName').value = '';
+            document.getElementById('admRoll').value = '';
+            document.getElementById('admSection').value = '';
+            document.getElementById('admClass').value = '';
+            document.getElementById('admAttendance').value = '';
+            document.getElementById('admAvgResult').value = '';
+            document.getElementById('admExams').value = '';
+        }
+
+        function deleteStudent(username) {
+            if (confirm(`Delete student '${username}'?`)) {
+                delete studentsData[username];
+                saveToStorage();
                 renderAdminStudentTable();
-                renderFinanceStudentTable();
-                showNotification("Student record removed!");
+                showToast('Student deleted', 'success');
             }
         }
     </script>
