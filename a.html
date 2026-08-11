@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Vision School - Multi-Page Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PapaParse CDN for CSV Bulk Import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        #toastContainer {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 400px;
+        }
+        .toast {
+            pointer-events: auto;
+            animation: slideDown 0.3s ease-out forwards;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .nav-btn.active-nav-student {
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-weight: 700;
+            border-left: 4px solid #2563eb;
+        }
+        .nav-btn.active-nav-admin {
+            background-color: #1e293b;
+            color: #f59e0b;
+            font-weight: 700;
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 flex flex-col justify-between antialiased w-full overflow-x-hidden">
+
+    <!-- TOP-CENTER TOAST NOTIFICATIONS CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <!-- MAIN HEADER -->
+    <header class="gradient-bg text-white shadow-md sticky top-0 z-40 w-full">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex justify-between items-center gap-2">
+            
+            <div class="flex items-center gap-2.5">
+                <!-- STUDENT HAMBURGER BUTTON -->
+                <button id="studentMenuBtn" onclick="toggleStudentMenu()" class="hidden text-white hover:text-amber-300 text-lg p-1.5 focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                
+                <!-- ADMIN HAMBURGER BUTTON -->
+                <button id="adminMenuBtn" onclick="toggleAdminMenu()" class="hidden text-white hover:text-amber-300 text-lg p-1.5 focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid text-lg sm:text-xl fa-graduation-cap text-amber-300"></i>
+                    <h1 class="text-sm sm:text-lg font-bold tracking-wide truncate max-w-[160px] sm:max-w-none">The Vision School</h1>
+                </div>
+            </div>
+
+            <div id="headerAdminBtnContainer" class="flex-shrink-0">
+                <button onclick="showAdminAuthScreen()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold px-2.5 py-1.5 rounded-lg text-xs shadow transition flex items-center gap-1">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span class="hidden sm:inline">Admin Panel</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- STUDENT SIDEBAR DRAWER -->
+    <div id="studentNavDrawer" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex">
+        <div class="w-64 sm:w-72 bg-white h-full shadow-2xl flex flex-col justify-between p-4">
+            <div>
+                <div class="flex justify-between items-center border-b pb-3 mb-3">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-compass text-blue-600"></i> Navigation
+                    </h3>
+                    <button onclick="toggleStudentMenu()" class="text-slate-400 hover:text-slate-700 text-base p-1"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <nav class="space-y-1">
+                    <button id="stBtn-homePage" onclick="switchStudentPage('homePage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-house w-4 text-center"></i> Home
+                    </button>
+                    <button id="stBtn-timetablePage" onclick="switchStudentPage('timetablePage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-calendar-days w-4 text-center"></i> Timetable
+                    </button>
+                    <button id="stBtn-resultPage" onclick="switchStudentPage('resultPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-award w-4 text-center"></i> Results
+                    </button>
+                    <button id="stBtn-homeworkPage" onclick="switchStudentPage('homeworkPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-blue-50 text-slate-700 transition">
+                        <i class="fa-solid fa-pen-ruler w-4 text-center"></i> Homework
+                    </button>
+                </nav>
+            </div>
+            <div class="border-t pt-3 space-y-2">
+                <button onclick="window.print()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Print Details
+                </button>
+                <button onclick="logoutStudent()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 py-1.5 rounded-lg text-xs font-bold transition border border-red-200 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </div>
+        <div class="flex-grow" onclick="toggleStudentMenu()"></div>
+    </div>
+
+    <!-- ADMIN SIDEBAR DRAWER -->
+    <div id="adminNavDrawer" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex">
+        <div class="w-64 sm:w-72 bg-slate-900 text-white h-full shadow-2xl flex flex-col justify-between p-4">
+            <div>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-3">
+                    <h3 class="font-bold text-amber-400 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-sliders"></i> Admin Menu
+                    </h3>
+                    <button onclick="toggleAdminMenu()" class="text-slate-400 hover:text-white text-base p-1"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <nav class="space-y-1">
+                    <button id="admBtn-adminOverviewPage" onclick="switchAdminPage('adminOverviewPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-chart-pie w-4 text-center"></i> Overview & Import
+                    </button>
+                    <button id="admBtn-adminClassPage" onclick="switchAdminPage('adminClassPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-layer-group w-4 text-center"></i> Class Updates
+                    </button>
+                    <button id="admBtn-adminProfilePage" onclick="switchAdminPage('adminProfilePage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-user-plus w-4 text-center"></i> Student Profiles
+                    </button>
+                    <button id="admBtn-adminDirectoryPage" onclick="switchAdminPage('adminDirectoryPage')" class="nav-btn w-full text-left px-3 py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center gap-2.5 hover:bg-slate-800 text-slate-300 transition">
+                        <i class="fa-solid fa-users w-4 text-center"></i> Students List
+                    </button>
+                </nav>
+            </div>
+            <div class="border-t border-slate-800 pt-3 space-y-2">
+                <button onclick="exportStudentsToCSV()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-file-export"></i> Export CSV
+                </button>
+                <button onclick="logoutAdmin()" class="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-power-off"></i> Exit Admin
+                </button>
+            </div>
+        </div>
+        <div class="flex-grow" onclick="toggleAdminMenu()"></div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto p-2.5 sm:p-5 w-full flex-grow">
+
+        <!-- 1. STUDENT LOGIN SCREEN -->
+        <section id="loginSection" class="hidden max-w-sm mx-auto my-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 text-lg border border-blue-100">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h2 class="text-lg font-bold text-slate-800">Student Portal Login</h2>
+                <p class="text-slate-500 text-[11px] mt-0.5">Enter credentials to continue</p>
+            </div>
+
+            <form onsubmit="handleStudentLogin(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Username</label>
+                    <input type="text" id="loginUsername" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs" placeholder="e.g. jasim">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs" placeholder="Password">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg shadow-sm transition text-xs mt-2">
+                    Login
+                </button>
+            </form>
+        </section>
+
+        <!-- 2. STUDENT MULTI-PAGE SECTION -->
+        <section id="dashboardSection" class="hidden space-y-4">
+            
+            <!-- Student Header Profile Info -->
+            <div class="bg-white p-3.5 sm:p-4 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800" id="dashStudentName">Welcome!</h2>
+                <p class="text-[11px] text-slate-500 mt-0.5">Roll: <span id="dashRollNo" class="font-semibold text-slate-700">-</span> | Sec: <span id="dashSectionName" class="font-semibold text-blue-600">-</span> | Class: <span id="dashClass" class="font-semibold text-slate-700">-</span></p>
+            </div>
+
+            <!-- A. STUDENT HOME PAGE -->
+            <div id="homePage" class="student-page space-y-4">
+                <!-- STATS OVERVIEW -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Attendance</p>
+                            <p class="text-xl font-extrabold text-emerald-600 mt-0.5" id="dashAttendance">0%</p>
+                        </div>
+                        <div class="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Status</p>
+                            <p class="text-xs font-bold text-blue-600 mt-1">Active</p>
+                        </div>
+                        <div class="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-base flex-shrink-0">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUICK MODULES -->
+                <div>
+                    <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Quick Access</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        
+                        <div onclick="switchStudentPage('timetablePage')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-slate-50 cursor-pointer flex flex-col items-center justify-center text-center">
+                            <div class="w-9 h-9 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm mb-1">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                            <span class="font-bold text-slate-700 text-[11px]">Timetable</span>
+                        </div>
+
+                        <div onclick="switchStudentPage('resultPage')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-slate-50 cursor-pointer flex flex-col items-center justify-center text-center">
+                            <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm mb-1">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+                            <span class="font-bold text-slate-700 text-[11px]">Results</span>
+                        </div>
+
+                        <div onclick="switchStudentPage('homeworkPage')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-slate-50 cursor-pointer flex flex-col items-center justify-center text-center">
+                            <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-sm mb-1">
+                                <i class="fa-solid fa-pen-ruler"></i>
+                            </div>
+                            <span class="font-bold text-slate-700 text-[11px]">Homework</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Announcement Board -->
+                <div class="bg-amber-50/90 border-l-4 border-amber-400 p-3 rounded-r-xl shadow-sm">
+                    <div class="flex items-center gap-1.5 text-amber-800 font-bold text-xs mb-1">
+                        <i class="fa-solid fa-bullhorn"></i> Notice Board
+                    </div>
+                    <p id="dashNotice" class="text-xs text-amber-900 leading-relaxed">No active notices.</p>
+                </div>
+            </div>
+
+            <!-- B. TIMETABLE PAGE -->
+            <div id="timetablePage" class="student-page hidden space-y-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-calendar-days text-indigo-500"></i> Timetable & Syllabus
+                    </h3>
+                    <div id="examScheduleList" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- C. RESULT PAGE -->
+            <div id="resultPage" class="student-page hidden space-y-3">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-xl shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-blue-100 tracking-wider">Overall Average Result</p>
+                        <p class="text-2xl font-extrabold mt-0.5" id="dashAvgResult">0%</p>
+                    </div>
+                    <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chart-line text-amber-300"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-award text-amber-500"></i> Subject Marks
+                    </h3>
+                    <div id="examList" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- D. HOMEWORK PAGE -->
+            <div id="homeworkPage" class="student-page hidden space-y-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+                    <div class="border-b pb-2">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-ruler text-amber-500"></i> Today's Homework
+                        </h3>
+                    </div>
+                    <div id="dashTodayHomework" class="text-xs leading-relaxed text-slate-700 space-y-2"></div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 3. ADMIN AUTHENTICATION SCREEN -->
+        <section id="adminAuthSection" class="hidden max-w-sm mx-auto my-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-shield text-amber-500"></i> Admin Verification
+                </h3>
+                <button onclick="goBackFromAdminAuth()" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-semibold transition flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+            </div>
+            <form onsubmit="event.preventDefault(); verifyAdminPassword();" class="space-y-3">
+                <p class="text-[11px] text-slate-500">Enter admin security password:</p>
+                <input type="password" id="adminPasswordInput" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs" placeholder="Password">
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded-lg transition shadow-sm text-xs">
+                    Access Control Panel
+                </button>
+            </form>
+        </section>
+
+        <!-- 4. ADMIN MULTI-PAGE PANEL -->
+        <section id="adminPanelSection" class="hidden space-y-4">
+            
+            <!-- Admin Header -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-sm font-bold text-slate-800 truncate">Admin Portal</h2>
+                </div>
+                <button onclick="logoutAdmin()" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-red-200 flex items-center gap-1">
+                    <i class="fa-solid fa-power-off"></i> Exit
+                </button>
+            </div>
+
+            <!-- ADMIN PAGE 1: OVERVIEW & CSV IMPORT -->
+            <div id="adminOverviewPage" class="admin-page space-y-4">
+                <div class="w-full">
+                    <div class="bg-blue-600 text-white p-3.5 rounded-xl shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] opacity-80 uppercase font-bold tracking-wider">Total Students</p>
+                            <p class="text-xl font-extrabold mt-0.5" id="totalStudentsCount">0</p>
+                        </div>
+                        <i class="fa-solid fa-users text-xl opacity-60"></i>
+                    </div>
+                </div>
+
+                <!-- SMART BULK CSV UPLOAD -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center gap-2 border-b pb-2">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-excel text-emerald-600 text-base"></i>
+                            <h4 class="font-bold text-slate-800 text-xs sm:text-sm">Bulk Import (CSV)</h4>
+                        </div>
+                        <button type="button" onclick="downloadSampleCSV()" class="text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-download"></i> Sample
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-500">
+                        CSV mein sirf <b>Name</b> aur <b>Class</b> dalein. Auto username generate hoga.
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-stretch gap-2 pt-1">
+                        <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 cursor-pointer border rounded-lg p-1">
+                        <button onclick="processCSVUpload()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg transition flex-shrink-0 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN PAGE 2: CLASS MANAGEMENT -->
+            <div id="adminClassPage" class="admin-page hidden space-y-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-1.5 border-b pb-2">
+                        <i class="fa-solid fa-layer-group text-blue-600 text-base"></i>
+                        <h4 class="font-bold text-slate-800 text-xs sm:text-sm">Class-Wide Bulk Updates</h4>
+                    </div>
+
+                    <form onsubmit="handleClassBulkUpdate(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">1. Select Section</label>
+                                <select id="bulkSectionSelect" onchange="onBulkSectionChange()" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white font-medium focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Select Section --</option>
+                                    <option value="Pre-Primary">Pre-Primary Section</option>
+                                    <option value="Primary">Primary Section</option>
+                                    <option value="Secondary">Secondary Section</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">2. Select Class</label>
+                                <select id="bulkClassSelect" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white font-medium focus:ring-2 focus:ring-blue-500" disabled>
+                                    <option value="">-- Select Section First --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Notice Announcement</label>
+                            <input type="text" id="bulkNotice" placeholder="e.g. Mid-term exams start Monday." class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-[11px] text-slate-700 mb-1"><i class="fa-solid fa-pen-ruler"></i> Homework (1 line per task)</label>
+                            <textarea id="bulkHomework" rows="2" placeholder="Math: Exercise 2.1&#10;English: Chapter 1 Questions" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-[11px] text-slate-700 mb-1">
+                                <i class="fa-solid fa-calendar-alt"></i> Time Table & Syllabus (Format: <b>Subject:TimeTable:Date Syllabus:Text</b>)
+                            </label>
+                            <textarea id="bulkSyllabus" rows="2" placeholder="Math:TimeTable:15 Aug/Monday/09:00 AM Syllabus:Chapter 1 to 3" class="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs shadow-sm transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-paper-plane"></i> Apply To Class
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ADMIN PAGE 3: INDIVIDUAL STUDENT PROFILE -->
+            <div id="adminProfilePage" class="admin-page hidden space-y-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+                    <div class="flex justify-between items-center border-b pb-2 gap-2">
+                        <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider truncate" id="formTitle">Add / Edit Student Profile</h4>
+                        <button type="button" onclick="resetStudentForm()" class="text-[11px] text-blue-600 font-semibold hover:underline flex-shrink-0">Reset</button>
+                    </div>
+
+                    <form onsubmit="handleSaveStudent(event)" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                            <input type="text" id="admUsername" placeholder="Username" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            <input type="password" id="admPass" placeholder="Password" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            <input type="text" id="admName" oninput="autoGenerateUsernameFromForm()" placeholder="Full Student Name" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            <input type="text" id="admRoll" placeholder="Roll No" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                            
+                            <select id="admSection" required class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+                                <option value="">Select Section</option>
+                                <option value="Pre-Primary">Pre-Primary</option>
+                                <option value="Primary">Primary</option>
+                                <option value="Secondary">Secondary</option>
+                            </select>
+
+                            <input type="text" id="admClass" placeholder="Class (e.g. Class 6 Rose)" required class="px-2.5 py-1.5 border rounded-lg text-xs">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <div>
+                                <label class="block font-semibold text-[10px] text-slate-700 mb-0.5">Attendance (%)</label>
+                                <input type="number" id="admAttendance" min="0" max="100" placeholder="e.g. 95" required class="w-full px-2.5 py-1 border rounded-lg text-xs bg-white">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-[10px] text-slate-700 mb-0.5">Custom Avg (%)</label>
+                                <input type="number" id="admAvgResult" min="0" max="100" placeholder="Optional" class="w-full px-2.5 py-1 border rounded-lg text-xs bg-white">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-[11px] text-slate-600 mb-1">Subject Marks (Format: Math: 85, English: 90)</label>
+                            <input type="text" id="admExams" placeholder="Math: 85, English: 78" class="w-full px-2.5 py-1.5 border rounded-lg text-xs">
+                        </div>
+
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 rounded-lg text-xs shadow-sm transition">
+                            Save Student Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ADMIN PAGE 4: REGISTERED STUDENTS TABLE -->
+            <div id="adminDirectoryPage" class="admin-page hidden space-y-4">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex flex-col gap-2 border-b pb-2">
+                        <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">All Students</h4>
+                        
+                        <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5">
+                            <div class="relative col-span-2 sm:col-span-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-[10px]"></i>
+                                <input type="text" id="searchStudentInput" oninput="renderAdminStudentTable()" placeholder="Search Name/Roll..." class="w-full pl-7 pr-2 py-1 border rounded-lg text-xs bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+
+                            <select id="filterSection" onchange="onTableSectionFilterChange()" class="px-2 py-1 border rounded-lg text-xs font-medium bg-slate-50">
+                                <option value="ALL">All Sections</option>
+                                <option value="Pre-Primary">Pre-Primary</option>
+                                <option value="Primary">Primary</option>
+                                <option value="Secondary">Secondary</option>
+                            </select>
+
+                            <select id="filterClass" onchange="renderAdminStudentTable()" class="px-2 py-1 border rounded-lg text-xs font-medium bg-slate-50">
+                                <option value="ALL">All Classes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto w-full">
+                        <table class="w-full text-left text-xs text-slate-600 border-collapse">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th class="p-2 whitespace-nowrap">User</th>
+                                    <th class="p-2 whitespace-nowrap">Roll</th>
+                                    <th class="p-2 whitespace-nowrap">Name</th>
+                                    <th class="p-2 whitespace-nowrap">Class</th>
+                                    <th class="p-2 whitespace-nowrap">Att.</th>
+                                    <th class="p-2 whitespace-nowrap">Avg</th>
+                                    <th class="p-2 text-right whitespace-nowrap">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-[10px] text-slate-400 mt-auto px-3">
+        The Vision School Management System &copy; 2026. All rights reserved.
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // NOTIFICATION TOAST
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+
+            toast.className = `toast ${bgColor} text-white px-3 py-2 rounded-xl shadow-xl flex items-center justify-between text-xs font-semibold border border-white/20`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid ${icon} text-sm"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if(toast) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-100%)';
+                    toast.style.transition = 'all 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 3500);
+        }
+
+        // HAMBURGER TOGGLES
+        function toggleStudentMenu() {
+            document.getElementById('studentNavDrawer').classList.toggle('hidden');
+        }
+
+        function toggleAdminMenu() {
+            document.getElementById('adminNavDrawer').classList.toggle('hidden');
+        }
+
+        // PAGE SWITCHERS WITH ACTIVE HIGHLIGHT
+        function switchStudentPage(pageId) {
+            document.querySelectorAll('.student-page').forEach(page => page.classList.add('hidden'));
+            const target = document.getElementById(pageId);
+            if(target) target.classList.remove('hidden');
+
+            document.querySelectorAll('#studentNavDrawer .nav-btn').forEach(btn => btn.classList.remove('active-nav-student'));
+            const activeBtn = document.getElementById(`stBtn-${pageId}`);
+            if(activeBtn) activeBtn.classList.add('active-nav-student');
+
+            document.getElementById('studentNavDrawer').classList.add('hidden');
+        }
+
+        function switchAdminPage(pageId) {
+            document.querySelectorAll('.admin-page').forEach(page => page.classList.add('hidden'));
+            const target = document.getElementById(pageId);
+            if(target) target.classList.remove('hidden');
+
+            document.querySelectorAll('#adminNavDrawer .nav-btn').forEach(btn => btn.classList.remove('active-nav-admin'));
+            const activeBtn = document.getElementById(`admBtn-${pageId}`);
+            if(activeBtn) activeBtn.classList.add('active-nav-admin');
+
+            document.getElementById('adminNavDrawer').classList.add('hidden');
+        }
+
+        // SECTION -> CLASS MAPPING
+        const baseClassesBySection = {
+            "Pre-Primary": ["Playgroup", "Nursery", "KG"],
+            "Primary": ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5"],
+            "Secondary": ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10th"]
+        };
+
+        function getClassOptionsWithSubsections(sectionName) {
+            const list = [];
+            if (sectionName && baseClassesBySection[sectionName]) {
+                baseClassesBySection[sectionName].forEach(cls => {
+                    list.push(`${cls} Rose`);
+                    list.push(`${cls} Tulip`);
+                });
+            } else {
+                for (let sec in baseClassesBySection) {
+                    baseClassesBySection[sec].forEach(cls => {
+                        list.push(`${cls} Rose`);
+                        list.push(`${cls} Tulip`);
+                    });
+                }
+            }
+            return list;
+        }
+
+        function getSectionFromClass(className) {
+            if(!className) return "Primary";
+            className = className.trim().toLowerCase();
+            if (["playgroup", "nursery", "nurcery", "kg"].some(v => className.includes(v))) return "Pre-Primary";
+            
+            const numMatch = className.match(/\d+/);
+            if (numMatch) {
+                const num = parseInt(numMatch[0], 10);
+                if (num >= 6) return "Secondary";
+                return "Primary";
+            }
+            return "Primary";
+        }
+
+        function normalizeClassName(clsName) {
+            if(!clsName) return "Class 1 Rose";
+            let str = clsName.trim();
+            let hasTulip = str.toLowerCase().includes('tulip');
+            let hasRose = str.toLowerCase().includes('rose');
+            let subSec = hasTulip ? "Tulip" : (hasRose ? "Rose" : "Rose");
+
+            let cleanStr = str.toLowerCase().replace(/rose|tulip/gi, '').trim();
+
+            if(cleanStr.includes('playgroup')) return `Playgroup ${subSec}`;
+            if(cleanStr.includes('nursery') || cleanStr.includes('nurcery')) return `Nursery ${subSec}`;
+            if(cleanStr.includes('kg')) return `KG ${subSec}`;
+
+            const numMatch = cleanStr.match(/\d+/);
+            if(numMatch) {
+                return `Class ${numMatch[0]} ${subSec}`;
+            }
+
+            return `${str} ${subSec}`;
+        }
+
+        // DATABASE SETUP
+        let studentsData = JSON.parse(localStorage.getItem('vschool_students_v12')) || {
+            "jasim": {
+                password: "jasim123",
+                name: "Jasim Ahmed",
+                rollNo: "VS-101",
+                section: "Secondary",
+                class: "Class 6 Rose",
+                attendance: 92,
+                customAvgResult: null,
+                notice: "Mid-Term Examinations start from August 15.",
+                todayHomework: "Math: Exercise 2.3 Questions 1 to 5\nEnglish: Read Chapter 4 and write summary",
+                exams: { "Mathematics": 88, "Physics": 76, "English": 82 },
+                examSchedule: [
+                    { subject: "Mathematics", date: "15 Aug/Monday/09:00 AM", syllabus: "Chapters 1 to 4" },
+                    { subject: "Physics", date: "17 Aug/Wednesday/09:00 AM", syllabus: "Unit 1 & 2" }
+                ]
+            },
+            "tabish": {
+                password: "tabish123",
+                name: "Tabish Khan",
+                rollNo: "VS-102",
+                section: "Secondary",
+                class: "Class 6 Tulip",
+                attendance: 95,
+                customAvgResult: null,
+                notice: "",
+                todayHomework: "",
+                exams: { "Mathematics": 90, "English": 85 },
+                examSchedule: []
+            }
+        };
+
+        function saveToStorage() {
+            localStorage.setItem('vschool_students_v12', JSON.stringify(studentsData));
+            updateAdminStats();
+        }
+
+        function getNextRollNumber() {
+            let maxNum = 100;
+            for (let username in studentsData) {
+                const roll = studentsData[username].rollNo;
+                if (roll && roll.startsWith("VS-")) {
+                    const num = parseInt(roll.replace("VS-", ""), 10);
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            }
+            return maxNum + 1;
+        }
+
+        let activeStudentUser = localStorage.getItem('vschool_active_student') || null;
+
+        window.onload = function() {
+            if (activeStudentUser && studentsData[activeStudentUser]) {
+                showStudentDashboardScreen();
+            } else {
+                showLoginSection();
+            }
+            populateFilterClasses();
+            updateAdminStats();
+        };
+
+        function hideAllSections() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('adminAuthSection').classList.add('hidden');
+            document.getElementById('adminPanelSection').classList.add('hidden');
+            document.getElementById('studentMenuBtn').classList.add('hidden');
+            document.getElementById('adminMenuBtn').classList.add('hidden');
+        }
+
+        function showLoginSection() {
+            hideAllSections();
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('headerAdminBtnContainer').classList.remove('hidden');
+        }
+
+        function showAdminAuthScreen() {
+            hideAllSections();
+            document.getElementById('adminAuthSection').classList.remove('hidden');
+            document.getElementById('adminPasswordInput').value = '';
+        }
+
+        function goBackFromAdminAuth() {
+            if (activeStudentUser && studentsData[activeStudentUser]) {
+                showStudentDashboardScreen();
+            } else {
+                showLoginSection();
+            }
+        }
+
+        function showAdminPanelScreen() {
+            hideAllSections();
+            document.getElementById('adminPanelSection').classList.remove('hidden');
+            document.getElementById('adminMenuBtn').classList.remove('hidden');
+            document.getElementById('headerAdminBtnContainer').classList.add('hidden');
+            switchAdminPage('adminOverviewPage');
+            populateFilterClasses();
+            renderAdminStudentTable();
+            updateAdminStats();
+        }
+
+        function showStudentDashboardScreen() {
+            hideAllSections();
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('studentMenuBtn').classList.remove('hidden');
+            document.getElementById('headerAdminBtnContainer').classList.remove('hidden');
+            switchStudentPage('homePage');
+            renderDashboard();
+        }
+
+        function updateAdminStats() {
+            const keys = Object.keys(studentsData);
+            document.getElementById('totalStudentsCount').innerText = keys.length;
+        }
+
+        function onBulkSectionChange() {
+            const sectionSelect = document.getElementById('bulkSectionSelect').value;
+            const classSelect = document.getElementById('bulkClassSelect');
+            
+            classSelect.innerHTML = '<option value="">-- Select Class --</option>';
+            if (sectionSelect) {
+                classSelect.disabled = false;
+                const classList = getClassOptionsWithSubsections(sectionSelect);
+                classList.forEach(cls => {
+                    classSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+                });
+            } else {
+                classSelect.disabled = true;
+                classSelect.innerHTML = '<option value="">-- Select Section First --</option>';
+            }
+        }
+
+        function populateFilterClasses() {
+            const sec = document.getElementById('filterSection').value;
+            const clsSelect = document.getElementById('filterClass');
+            
+            clsSelect.innerHTML = '<option value="ALL">All Classes</option>';
+            const options = getClassOptionsWithSubsections(sec === "ALL" ? null : sec);
+            options.forEach(cls => {
+                clsSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+            });
+        }
+
+        function onTableSectionFilterChange() {
+            populateFilterClasses();
+            renderAdminStudentTable();
+        }
+
+        function autoGenerateUsernameFromForm() {
+            const name = document.getElementById('admName').value.trim();
+            if(name) {
+                const cleanUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                document.getElementById('admUsername').value = cleanUsername;
+                document.getElementById('admPass').value = `${cleanUsername}123`;
+            }
+        }
+
+        function processCSVUpload() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showToast('Please select a CSV file first!', 'error');
+                return;
+            }
+
+            Papa.parse(file, {
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    let addedCount = 0;
+                    let currentRollNum = getNextRollNumber();
+                    const rows = results.data;
+
+                    if (!rows || rows.length === 0) {
+                        showToast('CSV File is empty!', 'error');
+                        return;
+                    }
+
+                    let startIdx = 0;
+                    const firstRow = rows[0].map(c => c ? c.toString().trim().toLowerCase() : '');
+                    
+                    if (firstRow.some(cell => cell.includes('name') || cell.includes('student') || cell.includes('class'))) {
+                        startIdx = 1; 
+                    }
+
+                    for (let i = startIdx; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length < 1) continue;
+
+                        let fullName = null;
+                        let rawClass = "Class 1 Rose";
+
+                        if (row.length === 1) {
+                            const parts = row[0].toString().trim().split(',');
+                            fullName = parts[0] ? parts[0].trim() : null;
+                            if (parts.length > 1) rawClass = parts[1].trim();
+                        } else {
+                            fullName = row[0] ? row[0].toString().trim() : null;
+                            rawClass = row[1] ? row[1].toString().trim() : "Class 1 Rose";
+                        }
+
+                        if (fullName) {
+                            let username = fullName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                            
+                            if (studentsData[username]) {
+                                username = `${username}${currentRollNum}`;
+                            }
+
+                            if (username.length > 0) {
+                                const formattedClass = normalizeClassName(rawClass);
+                                const section = getSectionFromClass(formattedClass);
+
+                                studentsData[username] = {
+                                    password: `${username}123`,
+                                    name: fullName,
+                                    rollNo: `VS-${currentRollNum}`,
+                                    section: section,
+                                    class: formattedClass,
+                                    attendance: 0,
+                                    customAvgResult: null,
+                                    notice: "",
+                                    todayHomework: "",
+                                    exams: {},
+                                    examSchedule: []
+                                };
+                                currentRollNum++;
+                                addedCount++;
+                            }
+                        }
+                    }
+
+                    if (addedCount > 0) {
+                        saveToStorage();
+                        renderAdminStudentTable();
+                        fileInput.value = ''; 
+                        showToast(`Imported ${addedCount} students!`, 'success');
+                    } else {
+                        showToast('Could not read CSV!', 'error');
+                    }
+                },
+                error: function() {
+                    showToast('Failed to parse CSV file!', 'error');
+                }
+            });
+        }
+
+        function downloadSampleCSV() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "name,class\n"
+                + "Ali Ahmed,5 tulip\n"
+                + "Muhammad Usama,6 rose\n"
+                + "Zainab Khan,7 tulip";
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "sample_student_list.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportStudentsToCSV() {
+            let csvRows = ["Username,RollNo,Name,Section,Class,Attendance"];
+            for (let [user, st] of Object.entries(studentsData)) {
+                csvRows.push(`"${user}","${st.rollNo || ''}","${st.name}","${st.section}","${st.class}","${st.attendance || 0}%"`);
+            }
+            const csvString = csvRows.join("\n");
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Registered_Students_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Student list exported!', 'success');
+        }
+
+        function handleClassBulkUpdate(e) {
+            e.preventDefault();
+            const section = document.getElementById('bulkSectionSelect').value;
+            const targetClass = document.getElementById('bulkClassSelect').value;
+            const notice = document.getElementById('bulkNotice').value.trim();
+            const homework = document.getElementById('bulkHomework').value.trim();
+            const syllabusStr = document.getElementById('bulkSyllabus').value.trim();
+
+            if (!section || !targetClass) {
+                showToast('Please select Section and Class!', 'error');
+                return;
+            }
+
+            const examSchedule = [];
+            if (syllabusStr) {
+                syllabusStr.split('\n').forEach(line => {
+                    line = line.trim();
+                    if (line !== '') {
+                        const match = line.match(/^([^:]+):TimeTable:\s*(.*?)\s*Syllabus:\s*(.*)$/i);
+                        if (match) {
+                            examSchedule.push({
+                                subject: match[1].trim(),
+                                date: match[2].trim(),
+                                syllabus: match[3].trim()
+                            });
+                        }
+                    }
+                });
+            }
+
+            let updatedCount = 0;
+            for (let username in studentsData) {
+                if (studentsData[username].class.toLowerCase() === targetClass.toLowerCase()) {
+                    studentsData[username].section = section;
+                    studentsData[username].notice = notice;
+                    studentsData[username].todayHomework = homework;
+                    studentsData[username].examSchedule = examSchedule;
+                    updatedCount++;
+                }
+            }
+
+            saveToStorage();
+            showToast(`Updated ${updatedCount} students in '${targetClass}'!`, 'success');
+        }
+
+        function handleStudentLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const pass = document.getElementById('loginPassword').value.trim();
+
+            if (studentsData[user] && studentsData[user].password === pass) {
+                activeStudentUser = user;
+                localStorage.setItem('vschool_active_student', user);
+                showToast(`Welcome back, ${studentsData[user].name}!`, 'success');
+                showStudentDashboardScreen();
+            } else {
+                showToast('Invalid username or password!', 'error');
+            }
+        }
+
+        function logoutStudent() {
+            activeStudentUser = null;
+            localStorage.removeItem('vschool_active_student');
+            showToast('Student logged out', 'success');
+            showLoginSection();
+        }
+
+        function renderDashboard() {
+            const st = studentsData[activeStudentUser];
+            if (!st) return;
+
+            document.getElementById('dashStudentName').innerText = `Welcome, ${st.name}!`;
+            document.getElementById('dashRollNo').innerText = st.rollNo || '-';
+            document.getElementById('dashSectionName').innerText = st.section || 'General';
+            document.getElementById('dashClass').innerText = st.class || '-';
+
+            document.getElementById('dashAttendance').innerText = `${st.attendance || 0}%`;
+
+            let calculatedAvg = 0;
+            let totalMarks = 0, totalSubjects = 0, examHtml = '';
+
+            if (st.exams && Object.keys(st.exams).length > 0) {
+                for (let [sub, mark] of Object.entries(st.exams)) {
+                    totalMarks += Number(mark);
+                    totalSubjects++;
+                    examHtml += `
+                        <div class="flex justify-between items-center border-b pb-1.5">
+                            <span class="font-semibold text-slate-700">${sub}</span>
+                            <span class="font-bold text-slate-900">${mark}%</span>
+                        </div>`;
+                }
+                calculatedAvg = (totalMarks / totalSubjects).toFixed(1);
+            } else {
+                examHtml = '<p class="text-xs text-slate-400">No subject marks added yet.</p>';
+            }
+
+            const finalAvg = st.customAvgResult !== null && st.customAvgResult !== undefined && st.customAvgResult !== ""
+                ? st.customAvgResult 
+                : calculatedAvg;
+
+            document.getElementById('dashAvgResult').innerText = `${finalAvg}%`;
+            document.getElementById('examList').innerHTML = examHtml;
+
+            document.getElementById('dashNotice').innerText = st.notice || "No active announcements for your class.";
+
+            const hwContainer = document.getElementById('dashTodayHomework');
+            if (st.todayHomework && st.todayHomework.trim() !== "") {
+                const hwLines = st.todayHomework.trim().split('\n');
+                let hwMarkup = '<ul class="space-y-1.5">';
+                hwLines.forEach(line => {
+                    if(line.trim() !== "") {
+                        hwMarkup += `<li class="flex items-start gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-100"><i class="fa-solid fa-check text-emerald-600 mt-0.5 flex-shrink-0"></i> <span>${line}</span></li>`;
+                    }
+                });
+                hwMarkup += '</ul>';
+                hwContainer.innerHTML = hwMarkup;
+            } else {
+                hwContainer.innerHTML = '<p class="italic text-slate-400">No homework assigned for today.</p>';
+            }
+
+            let schedHtml = '';
+            if (st.examSchedule && st.examSchedule.length > 0) {
+                st.examSchedule.forEach(ex => {
+                    schedHtml += `
+                        <div class="p-2.5 bg-indigo-50/50 rounded-lg border border-indigo-100 flex flex-col gap-1">
+                            <div class="flex justify-between items-center flex-wrap gap-1">
+                                <span class="font-bold text-indigo-900 text-xs">${ex.subject}</span>
+                                <span class="bg-indigo-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                    <i class="fa-regular fa-clock mr-0.5"></i> ${ex.date}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-600"><b>Syllabus:</b> ${ex.syllabus}</p>
+                        </div>`;
+                });
+            } else {
+                schedHtml = '<p class="text-xs text-slate-400">No time table or syllabus assigned yet.</p>';
+            }
+            document.getElementById('examScheduleList').innerHTML = schedHtml;
+        }
+
+        function verifyAdminPassword() {
+            const pwdInput = document.getElementById('adminPasswordInput').value;
+            if (pwdInput === "Vision123") {
+                showToast('Admin logged in', 'success');
+                showAdminPanelScreen();
+            } else {
+                showToast('Incorrect Admin Password!', 'error');
+            }
+        }
+
+        function logoutAdmin() {
+            showToast('Exited Admin Panel', 'success');
+            if (activeStudentUser && studentsData[activeStudentUser]) {
+                showStudentDashboardScreen();
+            } else {
+                showLoginSection();
+            }
+        }
+
+        function renderAdminStudentTable() {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+
+            const selectedSection = document.getElementById('filterSection').value;
+            const selectedClass = document.getElementById('filterClass').value;
+            const searchQuery = document.getElementById('searchStudentInput').value.trim().toLowerCase();
+
+            let matchesCount = 0;
+
+            for (let [username, st] of Object.entries(studentsData)) {
+                
+                if (searchQuery && !st.name.toLowerCase().includes(searchQuery) && !st.rollNo.toLowerCase().includes(searchQuery) && !username.includes(searchQuery)) {
+                    continue;
+                }
+
+                if (selectedSection !== "ALL" && st.section !== selectedSection) {
+                    continue;
+                }
+
+                if (selectedClass !== "ALL" && st.class.toLowerCase() !== selectedClass.toLowerCase()) {
+                    continue;
+                }
+
+                matchesCount++;
+
+                let avg = st.customAvgResult;
+                if(avg === null || avg === undefined || avg === "") {
+                    let total = 0, count = 0;
+                    if(st.exams) {
+                        for(let m of Object.values(st.exams)) { total += Number(m); count++; }
+                    }
+                    avg = count > 0 ? (total/count).toFixed(1) : 0;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-slate-50 transition">
+                        <td class="p-2 font-medium text-slate-800 whitespace-nowrap">${username}</td>
+                        <td class="p-2 whitespace-nowrap"><span class="bg-slate-100 text-slate-700 font-bold text-[10px] px-1.5 py-0.5 rounded">${st.rollNo || '-'}</span></td>
+                        <td class="p-2 whitespace-nowrap font-semibold">${st.name}</td>
+                        <td class="p-2 whitespace-nowrap font-semibold text-slate-700">${st.class}</td>
+                        <td class="p-2 whitespace-nowrap"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">${st.attendance || 0}%</span></td>
+                        <td class="p-2 whitespace-nowrap"><span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded">${avg}%</span></td>
+                        <td class="p-2 text-right space-x-1.5 whitespace-nowrap">
+                            <button onclick="editStudent('${username}')" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteStudent('${username}')" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            }
+
+            if(matchesCount === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="p-4 text-center text-slate-400 italic">
+                            No students found.
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        function handleSaveStudent(e) {
+            e.preventDefault();
+            const username = document.getElementById('admUsername').value.trim().toLowerCase();
+            const pass = document.getElementById('admPass').value.trim();
+            const name = document.getElementById('admName').value.trim();
+            const roll = document.getElementById('admRoll').value.trim();
+            const section = document.getElementById('admSection').value;
+            const rawCls = document.getElementById('admClass').value.trim();
+            const cls = normalizeClassName(rawCls);
+            const attendance = Number(document.getElementById('admAttendance').value);
+            const customAvgResult = document.getElementById('admAvgResult').value !== "" ? Number(document.getElementById('admAvgResult').value) : null;
+
+            const examsStr = document.getElementById('admExams').value.trim();
+            const exams = {};
+            if (examsStr) {
+                examsStr.split(',').forEach(item => {
+                    const parts = item.split(':');
+                    if (parts.length === 2 && parts[0].trim() !== '') {
+                        exams[parts[0].trim()] = Number(parts[1].trim());
+                    }
+                });
+            }
+
+            const existing = studentsData[username] || {};
+
+            studentsData[username] = {
+                password: pass,
+                name: name,
+                rollNo: roll,
+                section: section,
+                class: cls,
+                attendance: attendance,
+                customAvgResult: customAvgResult,
+                notice: existing.notice || '',
+                todayHomework: existing.todayHomework || '',
+                exams: exams,
+                examSchedule: existing.examSchedule || []
+            };
+
+            saveToStorage();
+            renderAdminStudentTable();
+            resetStudentForm();
+            showToast('Student Profile saved!', 'success');
+            switchAdminPage('adminDirectoryPage');
+        }
+
+        function editStudent(username) {
+            const st = studentsData[username];
+            switchAdminPage('adminProfilePage');
+            document.getElementById('formTitle').innerText = `Editing: ${st.name}`;
+            document.getElementById('admUsername').value = username;
+            document.getElementById('admPass').value = st.password;
+            document.getElementById('admName').value = st.name;
+            document.getElementById('admRoll').value = st.rollNo;
+            document.getElementById('admSection').value = st.section || '';
+            document.getElementById('admClass').value = st.class;
+            document.getElementById('admAttendance').value = st.attendance || 0;
+            document.getElementById('admAvgResult').value = st.customAvgResult !== null && st.customAvgResult !== undefined ? st.customAvgResult : '';
+            
+            let examArr = [];
+            if (st.exams) {
+                for (let [sub, mark] of Object.entries(st.exams)) {
+                    examArr.push(`${sub}: ${mark}`);
+                }
+            }
+            document.getElementById('admExams').value = examArr.join(', ');
+        }
+
+        function resetStudentForm() {
+            document.getElementById('formTitle').innerText = 'Add / Edit Student Profile';
+            document.getElementById('admUsername').value = '';
+            document.getElementById('admPass').value = '';
+            document.getElementById('admName').value = '';
+            document.getElementById('admRoll').value = '';
+            document.getElementById('admSection').value = '';
+            document.getElementById('admClass').value = '';
+            document.getElementById('admAttendance').value = '';
+            document.getElementById('admAvgResult').value = '';
+            document.getElementById('admExams').value = '';
+        }
+
+        function deleteStudent(username) {
+            if (confirm(`Delete student '${username}'?`)) {
+                delete studentsData[username];
+                saveToStorage();
+                renderAdminStudentTable();
+                showToast('Student deleted', 'success');
+            }
+        }
+    </script>
+</body>
+</html>
