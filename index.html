@@ -526,6 +526,44 @@
         The Vision School Management System &copy; 2026. All rights reserved.
     </footer>
 
+    <!-- FIREBASE SDK (MODULAR) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyAUHX2QecQML9cGGl0EDCBj8P7qyOh5cLM",
+          authDomain: "geo-motors-365days-3938c.firebaseapp.com",
+          projectId: "geo-motors-365days-3938c",
+          storageBucket: "geo-motors-365days-3938c.firebasestorage.app",
+          messagingSenderId: "468398968574",
+          appId: "1:468398968574:web:19434d603c8043b98f9faf"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Global Firebase state sync
+        window.db = db;
+        window.dbRef = ref(db);
+
+        // Listen for Realtime Changes from Firebase
+        const studentsRef = ref(db, 'students');
+        onValue(studentsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                window.studentsData = snapshot.val();
+                localStorage.setItem('vschool_students_v12', JSON.stringify(window.studentsData));
+            } else {
+                window.studentsData = {};
+            }
+            if (window.updateAdminStats) window.updateAdminStats();
+            if (window.renderAdminStudentTable) window.renderAdminStudentTable();
+            if (window.activeStudentUser && window.renderDashboard) window.renderDashboard();
+        });
+    </script>
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
         // NOTIFICATION TOAST
@@ -651,8 +689,8 @@
             return `${str} ${subSec}`;
         }
 
-        // DATABASE SETUP
-        let studentsData = JSON.parse(localStorage.getItem('vschool_students_v12')) || {
+        // DATABASE SETUP WITH FIREBASE INTEGRATION
+        var studentsData = JSON.parse(localStorage.getItem('vschool_students_v12')) || {
             "jasim": {
                 password: "jasim123",
                 name: "Jasim Ahmed",
@@ -687,6 +725,13 @@
         function saveToStorage() {
             localStorage.setItem('vschool_students_v12', JSON.stringify(studentsData));
             updateAdminStats();
+            // Sync with Firebase Database
+            if (window.db) {
+                const dbModule = window.db;
+                import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js").then(({ ref, set }) => {
+                    set(ref(dbModule, 'students'), studentsData);
+                });
+            }
         }
 
         function getNextRollNumber() {
